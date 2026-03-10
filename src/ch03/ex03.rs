@@ -1,5 +1,8 @@
 use crate::{ch01::ex01::FieldElement, ex01::ToFieldElement};
-use std::{io::{Error, ErrorKind}, ops::Add};
+use std::{
+    io::{Error, ErrorKind},
+    ops::Add,
+};
 // use crate::ch02::ex02::Point;
 
 #[derive(Debug, Clone, Copy)]
@@ -13,7 +16,7 @@ pub struct Point {
 impl Add for Point {
     type Output = Result<Self, Error>;
     fn add(self, rhs: Self) -> Self::Output {
-      if self.a != rhs.a || self.b != rhs.b {
+        if self.a != rhs.a || self.b != rhs.b {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 "Points are not on the same curve",
@@ -27,12 +30,12 @@ impl Add for Point {
             return Ok(self);
         }
 
-        let mut slope = 0_u64.to_felt(self.a.order);
+        // let mut slope = 0_u64.to_felt(self.a.order);
         let (x1, y1) = (self.x.unwrap(), self.y.unwrap());
         let (x2, y2) = (rhs.x.unwrap(), rhs.y.unwrap());
 
         // If x1 == x2 and y1 != y2 => P + (-P) = O
-        if x1 == x2 {
+        let slope = if x1 == x2 {
             // If y1 != y2 (i.e. y1 == -y2 mod p) -> P + (-P) = O
             if y1 != y2 {
                 return Ok(Point::infinity(self.a, self.b));
@@ -53,7 +56,7 @@ impl Add for Point {
             if denominator.element == 0 {
                 return Ok(Point::infinity(self.a, self.b));
             }
-            slope = numerator / denominator;
+            numerator / denominator
         } else {
             // General addition case: slope = (y2 - y1) / (x2 - x1)
             let change_y = y2 - y1;
@@ -63,8 +66,8 @@ impl Add for Point {
             if change_x.element == 0 {
                 return Ok(Point::infinity(self.a, self.b));
             }
-            slope = change_y / change_x;
-        }
+            change_y / change_x
+        };
 
         let x3 = slope.pow(2) - self.x.unwrap() - rhs.x.unwrap();
 
@@ -78,18 +81,31 @@ impl Add for Point {
             b: self.b,
             x: Some(x3),
             y: Some(y3),
-        })  
+        })
     }
 }
 
 impl Point {
-    pub fn new(a: FieldElement, b: FieldElement, x: Option<FieldElement>, y: Option<FieldElement>) -> Result<Point, Error> {
+    pub fn new(
+        a: FieldElement,
+        b: FieldElement,
+        x: Option<FieldElement>,
+        y: Option<FieldElement>,
+    ) -> Result<Point, Error> {
         if x.is_none() && y.is_none() {
-            return Ok(Point { a, b, x: None, y: None });
+            return Ok(Point {
+                a,
+                b,
+                x: None,
+                y: None,
+            });
         }
 
         if x.is_none() || y.is_none() {
-            return Err(Error::new(ErrorKind::InvalidInput, "x and y must be both some or both none"));
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                "x and y must be both some or both none",
+            ));
         }
 
         let x_unwrapped = x.unwrap();
@@ -119,7 +135,12 @@ impl Point {
     }
 
     pub fn infinity(a: FieldElement, b: FieldElement) -> Point {
-        Point { a, b, x: None, y: None }
+        Point {
+            a,
+            b,
+            x: None,
+            y: None,
+        }
     }
 
     pub fn eq(&self, other: Self) -> bool {
@@ -132,7 +153,6 @@ impl Point {
             (Some(sx), Some(sy), Some(ox), Some(oy)) => sx == ox && sy == oy,
             _ => false, // one is infinity, the other isn't
         }
-            
     }
 
     pub fn neq(&self, other: Self) -> bool {
@@ -172,7 +192,6 @@ impl Point {
     }
 }
 
-
 pub fn test_point() {
     let order = 223;
     let a = FieldElement::new(0, order);
@@ -197,21 +216,4 @@ pub fn test_point() {
 
     let point4_scaled = point4.scalar_mult(7);
     println!("{:?}", point4_scaled);
-}
-
-#[cfg(test)]
-mod tests {
-    use num_bigint::BigUint;
-
-    use super::*;
-    // TODO: Write a new implementation of the FieldElement, but using BigUint now instead of u64
-    #[test]
-    fn test_gen_point() {
-        let gx = b"0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
-        let gy = b"0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
-
-        let p = 2_u64.pow(256) - 2_u64.pow(32) - 977;
-
-        // let point = Point::new(a, b, x, y)
-    }
 }
