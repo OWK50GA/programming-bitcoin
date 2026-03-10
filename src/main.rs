@@ -1,4 +1,5 @@
 use programming_bitcoin::ex01::FieldElement;
+use programming_bitcoin::ex03::test_point;
 
 fn main() {
     // Create a new FieldElement
@@ -14,8 +15,10 @@ fn main() {
     println!("fe1 equals fe3: {}", fe1.equals(&fe3));
     println!("fe1 equals fe2: {}", fe1.equals(&fe2));
     println!("fe1 equals fe2: {}", fe1 == fe3);
-    println!("fe1 times fe2: {:?}", fe1.mul(&fe2));
-    println!("fe1 raised to power 6: {:?}", fe1.exp(6));
-    println!("fe1 divided by fe2: {:?}", fe1.div(&fe2));
-    println!("fe1 raised to power 6: {:?}", fe1.exp(-5));
+    println!("fe1 times fe2: {:?}", fe1 * fe2);
+    println!("fe1 raised to power 6: {:?}", fe1.pow(6));
+    println!("fe1 divided by fe2: {:?}", fe1 / fe2);
+    println!("fe1 raised to power 6: {:?}", fe1.pow(-5));
+
+    test_point();
 }
