@@ -62,10 +62,6 @@ impl PartialEq for FieldElement {
     fn eq(&self, other: &Self) -> bool {
         self.order == other.order && self.element == other.element
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl fmt::Display for FieldElement {

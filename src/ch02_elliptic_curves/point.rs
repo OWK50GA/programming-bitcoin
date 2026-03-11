@@ -49,6 +49,7 @@ impl Point {
         })
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn eq(&self, other: Self) -> bool {
         self.a == other.a
             && self.b == other.b
@@ -186,7 +187,7 @@ mod tests {
             x: Some(0),
             y: Some(1),
         };
-        assert_eq!(Point::is_valid_point(p).unwrap(), true);
+        assert!(Point::is_valid_point(p).unwrap());
     }
 
     #[test]
@@ -197,6 +198,6 @@ mod tests {
             x: Some(1),
             y: Some(2),
         };
-        assert_eq!(Point::is_valid_point(p).unwrap(), false);
+        assert!(!Point::is_valid_point(p).unwrap());
     }
 }

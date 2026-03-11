@@ -174,7 +174,7 @@ impl S256Point {
         }
     }
 
-    pub fn eq(&self, other: Self) -> bool {
+    pub fn equals(&self, other: Self) -> bool {
         if self.a == other.a && self.b == other.b {
             return false;
         }
@@ -187,7 +187,7 @@ impl S256Point {
     }
 
     pub fn neq(&self, other: Self) -> bool {
-        !self.eq(other)
+        !self.equals(other)
     }
 
     pub fn is_valid_point(point: Self) -> Result<bool, Error> {
