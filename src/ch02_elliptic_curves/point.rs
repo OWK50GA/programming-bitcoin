@@ -2,10 +2,10 @@ use std::io::{Error, ErrorKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
-    a: u64,
-    b: u64,
-    x: Option<u64>,
-    y: Option<u64>, // Option because of the point at infinity
+    pub a: u64,
+    pub b: u64,
+    pub x: Option<u64>,
+    pub y: Option<u64>, // Option because of the point at infinity
 }
 
 impl Point {
@@ -49,6 +49,7 @@ impl Point {
         })
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn eq(&self, other: Self) -> bool {
         self.a == other.a
             && self.b == other.b
@@ -116,7 +117,7 @@ impl Point {
             });
         }
 
-        if self.eq(other) && self.y.unwrap() == 0 * self.x.unwrap() {
+        if self.eq(other) && self.y.unwrap() == 0 {
             return Ok(Point {
                 a: self.a,
                 b: self.b,
@@ -186,7 +187,7 @@ mod tests {
             x: Some(0),
             y: Some(1),
         };
-        assert_eq!(Point::is_valid_point(p).unwrap(), true);
+        assert!(Point::is_valid_point(p).unwrap());
     }
 
     #[test]
@@ -197,6 +198,6 @@ mod tests {
             x: Some(1),
             y: Some(2),
         };
-        assert_eq!(Point::is_valid_point(p).unwrap(), false);
+        assert!(!Point::is_valid_point(p).unwrap());
     }
 }

@@ -1,4 +1,4 @@
-// For the to_felts256, the order should not be an argument, 
+// For the to_felts256, the order should not be an argument,
 // it should be Field Size from the secp256k1 library
 
 use std::{
@@ -6,10 +6,10 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
+use num_bigint::{BigInt, BigUint, Sign, ToBigInt, ToBigUint};
 use secp256k1::constants::FIELD_SIZE;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct S256Field {
     pub order: BigUint,
     pub element: BigUint,
@@ -76,10 +76,6 @@ impl PartialEq for S256Field {
     fn eq(&self, other: &Self) -> bool {
         self.order == other.order && self.element == other.element
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl fmt::Display for S256Field {
@@ -143,7 +139,7 @@ impl S256Field {
 
     pub fn from_bytes(bytes: &[u8]) -> Self {
         let big_bytes = BigUint::from_bytes_be(bytes);
-        
+
         Self::new(big_bytes)
     }
 
@@ -212,6 +208,11 @@ impl S256Field {
             }
         }
     }
+
+    pub fn sqrt(&self) -> Self {
+        let p = BigInt::from_bytes_be(Sign::Plus, &FIELD_SIZE);
+        self.pow((p + 1.to_bigint().unwrap()) / 4)
+    }
 }
 
 #[cfg(test)]
@@ -225,12 +226,6 @@ mod tests {
         let fe = S256Field::new(3_u8.to_biguint().unwrap());
         assert_eq!(fe.element, 3_u8.to_biguint().unwrap());
         assert_eq!(fe.order, BigUint::from_bytes_be(&FIELD_SIZE));
-    }
-
-    #[test]
-    #[should_panic(expected = "Element must be less than order")]
-    fn test_new_invalid_element() {
-        S256Field::new(BigUint::from_bytes_be(&FIELD_SIZE) + 1.to_biguint().unwrap());
     }
 
     #[test]

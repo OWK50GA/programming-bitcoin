@@ -1,14 +1,16 @@
 use num_bigint::{BigUint, ToBigInt, ToBigUint};
-use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
+use secp256k1::constants::{FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
 
-use crate::{ch03::s256_field::{S256Field, ToS256Field}, signature::Signature};
+use crate::ch04_serialization::ser_private_key::PrivateKey;
+use crate::ch04_serialization::ser_s256_field::{S256Field, ToS256Field};
+use crate::ch04_serialization::ser_signature::Signature;
+use ripemd::{Digest as RipemdDigest, Ripemd160};
 use std::{
     io::{Error, ErrorKind},
     ops::Add,
 };
-// use crate::ch02::ex02::Point;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct S256Point {
     pub a: S256Field,
     pub b: S256Field,
@@ -92,7 +94,7 @@ impl Add for S256Point {
 }
 
 const S256A: u64 = 0;
-const S256B: u64 = 0;
+const S256B: u64 = 7;
 
 impl S256Point {
     fn get_coefs() -> (S256Field, S256Field) {
@@ -152,7 +154,6 @@ impl S256Point {
 
         let (a, b) = Self::get_coefs();
 
-        println!("x: {}", hex::encode(gx));
         let x = S256Field::new(BigUint::from_bytes_be(&gx));
         let y = S256Field::new(BigUint::from_bytes_be(&gy));
 
@@ -173,7 +174,7 @@ impl S256Point {
         }
     }
 
-    pub fn eq(&self, other: Self) -> bool {
+    pub fn equals(&self, other: Self) -> bool {
         if self.a == other.a && self.b == other.b {
             return false;
         }
@@ -186,7 +187,7 @@ impl S256Point {
     }
 
     pub fn neq(&self, other: Self) -> bool {
-        !self.eq(other)
+        !self.equals(other)
     }
 
     pub fn is_valid_point(point: Self) -> Result<bool, Error> {
@@ -235,37 +236,90 @@ impl S256Point {
 
         Ok(total.x.unwrap().element == sig.r.element)
     }
-}
 
-pub fn test_point() {
-    // let x1 = S256Field::new(192.to_biguint().unwrap());
-    // let y1 = S256Field::new(105.to_biguint().unwrap());
-    // let x2 = S256Field::new(17.to_biguint().unwrap());
-    // let y2 = S256Field::new(56.to_biguint().unwrap());
-    // let x3 = S256Field::new(15.to_biguint().unwrap());
-    // let y3 = S256Field::new(86.to_biguint().unwrap());
+    pub fn sec(&self, compressed: bool) -> Vec<u8> {
+        let x = self.x.as_ref().unwrap();
+        let y = self.y.as_ref().unwrap();
 
-    // let point1 = S256Point::new(Some(x1), Some(y1)).unwrap();
-    // let point2 = S256Point::new(Some(x2), Some(y2)).unwrap();
-    // println!("{:?}", point1);
-    // println!("{:?}", point2);
+        let y_parity = &y.element % 2.to_biguint().unwrap();
 
-    // let point3 = point1 + point2;
-    // println!("{:?}", point3);
+        let x_bytes = x.element.to_bytes_be();
+        if compressed {
+            let mut sec_format_key = vec![];
+            let parity_byte = if y_parity == 0.to_biguint().unwrap() {
+                [2_u8]
+            } else {
+                [3_u8]
+            };
+            sec_format_key.extend_from_slice(&parity_byte);
 
-    // let point4 = S256Point::new(Some(x3), Some(y3)).unwrap();
-    // println!("{:?}", point4);
+            sec_format_key.extend_from_slice(&x_bytes);
 
-    // let point4_scaled = point4.scalar_mult(7.to_biguint().unwrap());
-    // println!("{:?}", point4_scaled);
+            sec_format_key
+        } else {
+            let mut sec_format_key = vec![];
+            sec_format_key.extend_from_slice(&[4_u8]);
+            let y_bytes = y.element.to_bytes_be();
 
-    let group_hex = hex::encode(FIELD_SIZE); // -> P -> Prime for the field
-    let curve_hex = hex::encode(CURVE_ORDER); // N -> group order
-    println!("Group Hex: {group_hex}");
-    println!("Curve Hex: {curve_hex}");
+            sec_format_key.extend_from_slice(&x_bytes);
+            sec_format_key.extend_from_slice(&y_bytes);
 
-    let generator = S256Point::generator();
+            sec_format_key
+        }
+    }
 
-    let infty = generator.scalar_mult(BigUint::from_bytes_be(&CURVE_ORDER));
-    println!("{:#?}", infty);
+    pub fn parse(&self, sec_bin: Vec<u8>) -> Self {
+        // returns a Point object from a SEC binary (not hex)
+        let p = S256Field::from_bytes(&FIELD_SIZE);
+        if sec_bin[0] == 4 {
+            let x = &sec_bin[1..33];
+            let y = &sec_bin[33..];
+
+            let x_int = S256Field::from_bytes(x);
+            let y_int = S256Field::from_bytes(y);
+
+            return Self::new(Some(x_int), Some(y_int)).unwrap();
+        }
+
+        let is_even = sec_bin[0] == 2;
+        let x = S256Field::from_bytes(&sec_bin[1..]);
+        let alpha = x.pow(3.to_bigint().unwrap()) + S256B.to_felts256(x.clone().order);
+
+        let beta = alpha.sqrt();
+
+        let (even_beta, odd_beta) =
+            if beta.clone().element % 2.to_biguint().unwrap() == 0.to_biguint().unwrap() {
+                (beta.clone(), p - beta.clone())
+            } else {
+                (p - beta.clone(), beta)
+            };
+
+        if is_even {
+            Self::new(Some(x.clone()), Some(even_beta)).unwrap()
+        } else {
+            Self::new(Some(x), Some(odd_beta)).unwrap()
+        }
+    }
+
+    fn hash160(s: &[u8]) -> Vec<u8> {
+        let mut hasher = Ripemd160::new();
+        hasher.update(s);
+
+        hasher.finalize().to_vec()
+    }
+
+    fn point_hash160(&self, compressed: bool) -> Vec<u8> {
+        Self::hash160(&self.sec(compressed))
+    }
+
+    pub fn address(&self, compressed: bool, testnet: bool) -> String {
+        let h160 = self.point_hash160(compressed);
+
+        let prefix: [u8; 1] = if testnet { [0x6f] } else { [0x00] };
+
+        let mut encode_string = vec![];
+        encode_string.extend_from_slice(&prefix);
+        encode_string.extend_from_slice(&h160);
+        PrivateKey::encode_base58_checksum(&encode_string)
+    }
 }
