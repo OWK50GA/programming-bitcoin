@@ -10,3 +10,5 @@ rand = "0.8.5"
 hmac = "0.12.1"
 sha2 = "0.10.9"
 secp256k1 = { version = "0.31.1", features = ["global-context"]}
+bs58 = "0.5.1"
+ripemd = "0.1.3"

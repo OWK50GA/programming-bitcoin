@@ -1,14 +1,12 @@
-use crate::ch03::{s256_point, signature};
-use crate::s256_field::S256Field;
+use crate::ch04::{s256_point, ch04_signature::Signature};
+use crate::ch04::s256_field::{S256Field};
 use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
 use s256_point::S256Point;
 use secp256k1::constants::FIELD_SIZE;
-use sha2::Sha256;
-use signature::Signature;
+use sha2::{Sha256, Digest};
 use std::io::Error;
-
 type HmacSha256 = Hmac<Sha256>;
 
 pub struct PrivateKey {
@@ -58,7 +56,7 @@ impl PrivateKey {
         Ok(Signature { r, s })
     }
 
-    pub fn deterministic_k(&self, mut z: S256Field) -> S256Field {
+    fn deterministic_k(&self, mut z: S256Field) -> S256Field {
         let mut k = [0_u8; 32];
         let mut v = [0_u8; 32];
 
@@ -110,5 +108,37 @@ impl PrivateKey {
             hmac.update(&v);
             v = hmac.finalize().into_bytes().try_into().unwrap();
         }
+    }
+
+    pub fn encode_base58(s: &[u8]) -> String {
+        bs58::encode(&s).with_alphabet(bs58::Alphabet::RIPPLE).into_string()
+    }
+
+    pub fn encode_base58_checksum(b: &[u8]) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(b);
+        let hash = hasher.finalize();
+
+        let mut hasher = Sha256::new();
+        hasher.update(hash);
+        let hash2 = hasher.finalize();
+
+        let mut b_plus_checksum = vec![];
+        b_plus_checksum.extend_from_slice(b);
+        b_plus_checksum.extend_from_slice(&hash2[..4]);
+        Self::encode_base58(&b_plus_checksum)
+    }
+
+    pub fn wif(&self, compressed: bool, testnet: bool) -> String {
+        let secret_bytes = self.secret_bytes.to_bytes();
+        let prefix = if testnet { [0xef] } else { [0x80] };
+        let suffix = if compressed { [0x01] } else { [0] };
+
+        let mut combo = vec![];
+        combo.extend_from_slice(&prefix);
+        combo.extend_from_slice(&secret_bytes);
+        combo.extend_from_slice(&suffix);
+
+        Self::encode_base58_checksum(&combo)
     }
 }

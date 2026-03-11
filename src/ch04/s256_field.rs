@@ -6,7 +6,7 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
+use num_bigint::{BigInt, BigUint, Sign, ToBigInt, ToBigUint};
 use secp256k1::constants::FIELD_SIZE;
 
 #[derive(Debug, Clone)]
@@ -211,6 +211,11 @@ impl S256Field {
                 element: r.to_biguint().unwrap(),
             }
         }
+    }
+
+    pub fn sqrt(&self) -> Self {
+        let p = BigInt::from_bytes_be(Sign::Plus, &FIELD_SIZE);
+        self.pow((p + 1.to_bigint().unwrap()) / 4)
     }
 }
 
