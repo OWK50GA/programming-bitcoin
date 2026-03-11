@@ -1,14 +1,14 @@
 use num_bigint::{BigUint, ToBigInt, ToBigUint};
 use secp256k1::constants::{FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
 
-use crate::ch04_serialization::ser_signature::Signature;
 use crate::ch04_serialization::ser_private_key::PrivateKey;
 use crate::ch04_serialization::ser_s256_field::{S256Field, ToS256Field};
+use crate::ch04_serialization::ser_signature::Signature;
+use ripemd::{Digest as RipemdDigest, Ripemd160};
 use std::{
     io::{Error, ErrorKind},
     ops::Add,
 };
-use ripemd::{Ripemd160, Digest as RipemdDigest};
 
 #[derive(Debug, Clone, Default)]
 pub struct S256Point {
@@ -315,15 +315,11 @@ impl S256Point {
     pub fn address(&self, compressed: bool, testnet: bool) -> String {
         let h160 = self.point_hash160(compressed);
 
-        let prefix: [u8; 1] = if testnet {
-            [0x6f]
-        } else {
-            [0x00]
-        };
+        let prefix: [u8; 1] = if testnet { [0x6f] } else { [0x00] };
 
         let mut encode_string = vec![];
         encode_string.extend_from_slice(&prefix);
         encode_string.extend_from_slice(&h160);
         PrivateKey::encode_base58_checksum(&encode_string)
     }
-}   
+}

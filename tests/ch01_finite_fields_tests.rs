@@ -34,7 +34,7 @@ fn test_field_element_equality() {
     let fe1 = FieldElement::new(7, 13);
     let fe2 = FieldElement::new(7, 13);
     let fe3 = FieldElement::new(6, 13);
-    
+
     assert_eq!(fe1, fe2);
     assert_ne!(fe1, fe3);
     assert!(fe1.equals(&fe2));
@@ -46,7 +46,7 @@ fn test_field_element_inequality() {
     let fe1 = FieldElement::new(7, 13);
     let fe2 = FieldElement::new(6, 13);
     let fe3 = FieldElement::new(7, 13);
-    
+
     assert!(fe1.nequals(&fe2));
     assert!(!fe1.nequals(&fe3));
 }
@@ -56,7 +56,7 @@ fn test_field_element_comparison() {
     let fe1 = FieldElement::new(7, 13);
     let fe2 = FieldElement::new(6, 13);
     let fe3 = FieldElement::new(8, 13);
-    
+
     assert!(fe1.geq(&fe2));
     assert!(!fe1.geq(&fe3));
     assert!(fe1.leq(&fe3));
@@ -84,7 +84,7 @@ fn test_addition_no_wrap() {
     let fe1 = FieldElement::new(2, 7);
     let fe2 = FieldElement::new(3, 7);
     let result = fe1 + fe2;
-    
+
     assert_eq!(result.element, 5);
     assert_eq!(result.order, 7);
 }
@@ -94,7 +94,7 @@ fn test_addition_with_wrap() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(4, 7);
     let result = fe1 + fe2;
-    
+
     assert_eq!(result.element, 2); // (5 + 4) mod 7 = 2
     assert_eq!(result.order, 7);
 }
@@ -104,7 +104,7 @@ fn test_addition_identity() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(0, 7);
     let result = fe1 + fe2;
-    
+
     assert_eq!(result.element, 5);
 }
 
@@ -121,7 +121,7 @@ fn test_subtraction_no_wrap() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(2, 7);
     let result = fe1 - fe2;
-    
+
     assert_eq!(result.element, 3);
     assert_eq!(result.order, 7);
 }
@@ -131,7 +131,7 @@ fn test_subtraction_with_wrap() {
     let fe1 = FieldElement::new(2, 7);
     let fe2 = FieldElement::new(5, 7);
     let result = fe1 - fe2;
-    
+
     assert_eq!(result.element, 4); // (2 - 5) mod 7 = -3 mod 7 = 4
     assert_eq!(result.order, 7);
 }
@@ -141,7 +141,7 @@ fn test_subtraction_identity() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(0, 7);
     let result = fe1 - fe2;
-    
+
     assert_eq!(result.element, 5);
 }
 
@@ -150,7 +150,7 @@ fn test_subtraction_self() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(5, 7);
     let result = fe1 - fe2;
-    
+
     assert_eq!(result.element, 0);
 }
 
@@ -167,7 +167,7 @@ fn test_multiplication_no_wrap() {
     let fe1 = FieldElement::new(2, 7);
     let fe2 = FieldElement::new(3, 7);
     let result = fe1 * fe2;
-    
+
     assert_eq!(result.element, 6);
     assert_eq!(result.order, 7);
 }
@@ -177,7 +177,7 @@ fn test_multiplication_with_wrap() {
     let fe1 = FieldElement::new(3, 7);
     let fe2 = FieldElement::new(4, 7);
     let result = fe1 * fe2;
-    
+
     assert_eq!(result.element, 5); // (3 * 4) mod 7 = 12 mod 7 = 5
     assert_eq!(result.order, 7);
 }
@@ -187,7 +187,7 @@ fn test_multiplication_by_zero() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(0, 7);
     let result = fe1 * fe2;
-    
+
     assert_eq!(result.element, 0);
 }
 
@@ -196,7 +196,7 @@ fn test_multiplication_by_one() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(1, 7);
     let result = fe1 * fe2;
-    
+
     assert_eq!(result.element, 5);
 }
 
@@ -216,9 +216,9 @@ fn test_multiplication_different_orders() {
 fn test_inverse() {
     let fe = FieldElement::new(3, 7);
     let inv = fe.inv().unwrap();
-    
+
     assert_eq!(inv.element, 5); // 3 * 5 = 15 ≡ 1 mod 7
-    
+
     // Verify: fe * inv = 1
     let product = fe * inv;
     assert_eq!(product.element, 1);
@@ -228,7 +228,7 @@ fn test_inverse() {
 fn test_inverse_of_one() {
     let fe = FieldElement::new(1, 7);
     let inv = fe.inv().unwrap();
-    
+
     assert_eq!(inv.element, 1);
 }
 
@@ -237,7 +237,7 @@ fn test_division() {
     let fe1 = FieldElement::new(2, 7);
     let fe2 = FieldElement::new(3, 7);
     let result = fe1 / fe2;
-    
+
     // 2 / 3 = 2 * 3^-1 = 2 * 5 = 10 ≡ 3 mod 7
     assert_eq!(result.element, 3);
     assert_eq!(result.order, 7);
@@ -248,7 +248,7 @@ fn test_division_by_one() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = FieldElement::new(1, 7);
     let result = fe1 / fe2;
-    
+
     assert_eq!(result.element, 5);
 }
 
@@ -268,7 +268,7 @@ fn test_division_different_orders() {
 fn test_pow_positive() {
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(2);
-    
+
     assert_eq!(result.element, 2); // 3^2 = 9 ≡ 2 mod 7
 }
 
@@ -276,7 +276,7 @@ fn test_pow_positive() {
 fn test_pow_zero() {
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(0);
-    
+
     assert_eq!(result.element, 1); // Any number^0 = 1
 }
 
@@ -284,7 +284,7 @@ fn test_pow_zero() {
 fn test_pow_one() {
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(1);
-    
+
     assert_eq!(result.element, 3);
 }
 
@@ -292,7 +292,7 @@ fn test_pow_one() {
 fn test_pow_negative() {
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(-1);
-    
+
     assert_eq!(result.element, 5); // 3^-1 ≡ 5 mod 7
 }
 
@@ -300,7 +300,7 @@ fn test_pow_negative() {
 fn test_pow_large_positive() {
     let fe = FieldElement::new(2, 7);
     let result = fe.pow(10);
-    
+
     // 2^10 = 1024 ≡ 2 mod 7
     assert_eq!(result.element, 2);
 }
@@ -309,7 +309,7 @@ fn test_pow_large_positive() {
 fn test_pow_large_negative() {
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(-5);
-    
+
     // 3^-5 = (3^-1)^5 = 5^5 mod 7
     let inv = fe.inv().unwrap();
     let expected = inv.pow(5);
@@ -397,7 +397,7 @@ fn test_field_arithmetic_combination() {
     let b = FieldElement::new(3, 7);
     let c = FieldElement::new(4, 7);
     let d = FieldElement::new(1, 7);
-    
+
     let result = (a + b) * c - d;
     // (2 + 3) * 4 - 1 = 5 * 4 - 1 = 20 - 1 = 19 ≡ 5 mod 7
     assert_eq!(result.element, 5);
@@ -408,7 +408,7 @@ fn test_fermat_little_theorem() {
     // For prime p and a not divisible by p: a^(p-1) ≡ 1 mod p
     let fe = FieldElement::new(3, 7);
     let result = fe.pow(6); // 7 - 1 = 6
-    
+
     assert_eq!(result.element, 1);
 }
 
@@ -418,7 +418,7 @@ fn test_inverse_via_fermat() {
     let fe = FieldElement::new(3, 7);
     let inv1 = fe.inv().unwrap();
     let inv2 = fe.pow(5); // 7 - 2 = 5
-    
+
     assert_eq!(inv1.element, inv2.element);
 }
 
@@ -428,10 +428,10 @@ fn test_distributive_property() {
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(3, 7);
     let c = FieldElement::new(4, 7);
-    
+
     let left = a * (b + c);
     let right = a * b + a * c;
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -441,10 +441,10 @@ fn test_associative_property_addition() {
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(3, 7);
     let c = FieldElement::new(4, 7);
-    
+
     let left = (a + b) + c;
     let right = a + (b + c);
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -454,10 +454,10 @@ fn test_associative_property_multiplication() {
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(3, 7);
     let c = FieldElement::new(4, 7);
-    
+
     let left = (a * b) * c;
     let right = a * (b * c);
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -466,10 +466,10 @@ fn test_commutative_property_addition() {
     // a + b = b + a
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(5, 7);
-    
+
     let left = a + b;
     let right = b + a;
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -478,10 +478,10 @@ fn test_commutative_property_multiplication() {
     // a * b = b * a
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(5, 7);
-    
+
     let left = a * b;
     let right = b * a;
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -490,10 +490,10 @@ fn test_division_multiplication_inverse() {
     // a / b = a * b^-1
     let a = FieldElement::new(5, 7);
     let b = FieldElement::new(3, 7);
-    
+
     let div_result = a / b;
     let mult_result = a * b.inv().unwrap();
-    
+
     assert_eq!(div_result.element, mult_result.element);
 }
 
@@ -503,10 +503,10 @@ fn test_power_multiplication() {
     let a = FieldElement::new(3, 7);
     let m = 2;
     let n = 3;
-    
+
     let left = a.pow(m + n);
     let right = a.pow(m) * a.pow(n);
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -516,10 +516,10 @@ fn test_power_of_product() {
     let a = FieldElement::new(2, 7);
     let b = FieldElement::new(3, 7);
     let n = 3;
-    
+
     let left = (a * b).pow(n);
     let right = a.pow(n) * b.pow(n);
-    
+
     assert_eq!(left.element, right.element);
 }
 
@@ -532,10 +532,10 @@ fn test_larger_prime_field_operations() {
     let p = 31;
     let a = FieldElement::new(17, p);
     let b = FieldElement::new(21, p);
-    
+
     let sum = a + b;
     assert_eq!(sum.element, 7); // (17 + 21) mod 31 = 7
-    
+
     let product = a * b;
     assert_eq!(product.element, 16); // (17 * 21) mod 31 = 357 mod 31 = 16
 }
@@ -546,7 +546,7 @@ fn test_prime_field_97() {
     let a = FieldElement::new(95, p);
     let b = FieldElement::new(45, p);
     let c = FieldElement::new(31, p);
-    
+
     // (95 + 45) * 31 mod 97
     let result = (a + b) * c;
     // (95 + 45) = 140 ≡ 43 mod 97
@@ -559,7 +559,7 @@ fn test_copy_trait() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = fe1; // Copy, not move
     let fe3 = fe1; // Can still use fe1
-    
+
     assert_eq!(fe1.element, fe2.element);
     assert_eq!(fe1.element, fe3.element);
 }
@@ -568,7 +568,7 @@ fn test_copy_trait() {
 fn test_clone_trait() {
     let fe1 = FieldElement::new(5, 7);
     let fe2 = fe1.clone();
-    
+
     assert_eq!(fe1.element, fe2.element);
     assert_eq!(fe1.order, fe2.order);
 }

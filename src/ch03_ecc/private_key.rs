@@ -4,7 +4,7 @@ use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
 use s256_point::S256Point;
-use secp256k1::constants::{CURVE_ORDER};
+use secp256k1::constants::CURVE_ORDER;
 use sha2::Sha256;
 use signature::Signature;
 use std::io::Error;
@@ -49,12 +49,12 @@ impl PrivateKey {
         let k_inv = k.element.modinv(&n).ok_or_else(|| {
             Error::new(std::io::ErrorKind::InvalidInput, "k has no inverse mod n")
         })?;
-        
+
         // s = (z + r * private_key) / k mod n
         let z_mod_n = &z.element % &n;
         let private_key_mod_n = &self.secret_bytes.element % &n;
         let r_mod_n = &r % &n;
-        
+
         let s_numerator = (z_mod_n + (r_mod_n * private_key_mod_n)) % &n;
         let mut s = (s_numerator * k_inv) % &n;
 
@@ -63,9 +63,9 @@ impl PrivateKey {
             s = &n - s;
         }
 
-        Ok(Signature { 
-            r: S256Field::new(r), 
-            s: S256Field::new(s) 
+        Ok(Signature {
+            r: S256Field::new(r),
+            s: S256Field::new(s),
         })
     }
 

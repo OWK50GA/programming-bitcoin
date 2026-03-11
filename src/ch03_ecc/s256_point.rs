@@ -235,12 +235,14 @@ impl S256Point {
     pub fn verify_sig(&self, z: S256Field, sig: Signature) -> Result<bool, Error> {
         // ECDSA verification: all arithmetic must be done modulo CURVE_ORDER (n), not FIELD_SIZE (p)
         let n = BigUint::from_bytes_be(&CURVE_ORDER);
-        
+
         // Convert to modulo n arithmetic
-        let s_inv = sig.s.element.modinv(&n).ok_or_else(|| {
-            Error::new(ErrorKind::InvalidInput, "s has no inverse mod n")
-        })?;
-        
+        let s_inv = sig
+            .s
+            .element
+            .modinv(&n)
+            .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "s has no inverse mod n"))?;
+
         let u = (&z.element * &s_inv) % &n;
         let v = (&sig.r.element * &s_inv) % &n;
 

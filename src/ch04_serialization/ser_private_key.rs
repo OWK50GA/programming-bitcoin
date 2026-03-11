@@ -1,11 +1,11 @@
+use crate::ch04_serialization::ser_s256_field::S256Field;
 use crate::ch04_serialization::{ser_s256_point, ser_signature::Signature};
-use crate::ch04_serialization::ser_s256_field::{S256Field};
 use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
-use ser_s256_point::S256Point;
 use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE};
-use sha2::{Sha256, Digest};
+use ser_s256_point::S256Point;
+use sha2::{Digest, Sha256};
 use std::io::Error;
 type HmacSha256 = Hmac<Sha256>;
 
@@ -110,7 +110,9 @@ impl PrivateKey {
     }
 
     pub fn encode_base58(s: &[u8]) -> String {
-        bs58::encode(&s).with_alphabet(bs58::Alphabet::RIPPLE).into_string()
+        bs58::encode(&s)
+            .with_alphabet(bs58::Alphabet::RIPPLE)
+            .into_string()
     }
 
     pub fn encode_base58_checksum(b: &[u8]) -> String {

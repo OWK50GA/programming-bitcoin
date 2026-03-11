@@ -16,7 +16,7 @@ fn test_valid_point_creation() {
     // Check: 1^2 = 1, 0^3 + 0 + 1 = 1 ✓
     let point = Point::new(1, 1, 0, 1);
     assert!(point.is_ok());
-    
+
     let p = point.unwrap();
     assert_eq!(p.x.unwrap(), 0);
     assert_eq!(p.y.unwrap(), 1);
@@ -43,7 +43,7 @@ fn test_multiple_valid_points_same_curve() {
     // Curve: y^2 = x^3 + x + 1
     let p1 = Point::new(1, 1, 0, 1);
     let p2 = Point::new(1, 1, 0, 1);
-    
+
     assert!(p1.is_ok());
     assert!(p2.is_ok());
 }
@@ -56,7 +56,7 @@ fn test_multiple_valid_points_same_curve() {
 fn test_point_equality() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     assert!(p1.eq(p2));
 }
 
@@ -72,7 +72,7 @@ fn test_point_inequality_different_x() {
 fn test_point_neq_method() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     assert!(!p1.neq(p2));
 }
 
@@ -88,7 +88,7 @@ fn test_is_valid_point_true() {
         x: Some(0),
         y: Some(1),
     };
-    
+
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), true);
@@ -102,7 +102,7 @@ fn test_is_valid_point_false() {
         x: Some(1),
         y: Some(2),
     };
-    
+
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), false);
@@ -116,7 +116,7 @@ fn test_is_valid_point_another_invalid() {
         x: Some(2),
         y: Some(5),
     };
-    
+
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), false);
@@ -135,10 +135,10 @@ fn test_add_point_to_infinity() {
         x: None,
         y: None,
     };
-    
+
     let result = p1.add(p2);
     assert!(result.is_ok());
-    
+
     let sum = result.unwrap();
     assert_eq!(sum.x.unwrap(), 0);
     assert_eq!(sum.y.unwrap(), 1);
@@ -153,10 +153,10 @@ fn test_add_infinity_to_point() {
         y: None,
     };
     let p2 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     let result = p1.add(p2);
     assert!(result.is_ok());
-    
+
     let sum = result.unwrap();
     assert_eq!(sum.x.unwrap(), 0);
     assert_eq!(sum.y.unwrap(), 1);
@@ -167,7 +167,7 @@ fn test_add_infinity_to_point() {
 fn test_add_points_different_curves() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(0, 7, 0, 1).unwrap();
-    
+
     let result = p1.add(p2);
     assert!(result.is_err());
 }
@@ -177,7 +177,7 @@ fn test_add_point_to_itself_returns_infinity() {
     // When adding a point to itself with same x, should return infinity
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     // This test depends on the implementation details
     // The current implementation may handle point doubling differently
 }
@@ -190,10 +190,10 @@ fn test_add_point_to_itself_returns_infinity() {
 fn test_point_addition_on_small_curve() {
     // This test requires finding valid points on a curve and testing their addition
     // For curve y^2 = x^3 + x + 1, we need to find multiple valid points
-    
+
     // Point (0, 1) is valid
     let p1 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     // Adding point to itself
     let result = p1.add(p1);
     // Result depends on curve arithmetic implementation
@@ -204,7 +204,7 @@ fn test_point_operations_preserve_curve() {
     // Any point operation should result in a point on the same curve
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(1, 1, 0, 1).unwrap();
-    
+
     let result = p1.add(p2);
     if let Ok(sum) = result {
         if sum.x.is_some() && sum.y.is_some() {
@@ -224,7 +224,7 @@ fn test_overflow_detection_y_squared() {
     // Test with large values that would overflow
     let large_val = u64::MAX / 2;
     let result = Point::new(0, 1, 1, large_val);
-    
+
     // Should either succeed or fail gracefully with overflow error
     if result.is_err() {
         let err = result.unwrap_err();
@@ -237,7 +237,7 @@ fn test_overflow_detection_x_cubed() {
     // Test with large x value
     let large_val = u64::MAX / 2;
     let result = Point::new(0, 1, large_val, 1);
-    
+
     // Should handle overflow gracefully
     if result.is_err() {
         let err = result.unwrap_err();
@@ -262,7 +262,7 @@ fn test_point_with_zero_coordinates() {
     let result1 = Point::new(0, 0, 0, 0);
     // (0, 0) on y^2 = x^3: 0 = 0 ✓
     assert!(result1.is_ok());
-    
+
     let result2 = Point::new(0, 1, 0, 0);
     // (0, 0) on y^2 = x^3 + 1: 0 ≠ 1 ✗
     assert!(result2.is_err());
@@ -301,7 +301,7 @@ fn test_point_copy_trait() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = p1; // Copy
     let p3 = p1; // Can still use p1
-    
+
     assert!(p1.eq(p2));
     assert!(p1.eq(p3));
 }
@@ -310,7 +310,7 @@ fn test_point_copy_trait() {
 fn test_point_clone_trait() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = p1.clone();
-    
+
     assert!(p1.eq(p2));
 }
 
@@ -322,7 +322,7 @@ fn test_point_clone_trait() {
 fn test_point_debug_output() {
     let p = Point::new(1, 1, 0, 1).unwrap();
     let debug_str = format!("{:?}", p);
-    
+
     // Should contain "Point" in debug output
     assert!(debug_str.contains("Point"));
 }
@@ -335,10 +335,10 @@ fn test_point_debug_output() {
 fn test_error_message_invalid_point() {
     let result = Point::new(1, 1, 1, 2);
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     let err_msg = err.to_string();
-    
+
     // Error message should mention the point doesn't satisfy the equation
     assert!(err_msg.contains("does not satisfy"));
 }
@@ -348,13 +348,13 @@ fn test_error_message_invalid_point() {
 fn test_error_message_different_curves() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     let p2 = Point::new(0, 7, 0, 1).unwrap();
-    
+
     let result = p1.add(p2);
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     let err_msg = err.to_string();
-    
+
     // Error message should mention different curves
     assert!(err_msg.contains("not on the same curve"));
 }
@@ -367,7 +367,7 @@ fn test_error_message_different_curves() {
 fn test_curve_y2_x3_plus_7() {
     // Test several points on y^2 = x^3 + 7
     // This is Bitcoin's curve equation (over small field for testing)
-    
+
     // Need to find valid points through calculation
     // For small values, we can test invalid points
     let invalid = Point::new(0, 7, 1, 1);
@@ -377,11 +377,11 @@ fn test_curve_y2_x3_plus_7() {
 #[test]
 fn test_curve_y2_x3_plus_x_plus_1() {
     // Test curve y^2 = x^3 + x + 1
-    
+
     // (0, 1) is valid: 1 = 0 + 0 + 1 ✓
     let valid = Point::new(1, 1, 0, 1);
     assert!(valid.is_ok());
-    
+
     // (1, 2) is invalid: 4 ≠ 1 + 1 + 1 = 3 ✗
     let invalid = Point::new(1, 1, 1, 2);
     assert!(invalid.is_err());
@@ -397,12 +397,12 @@ fn test_identity_element_behavior() {
         x: None,
         y: None,
     };
-    
+
     // p + O = p
     let result1 = p.add(infinity);
     assert!(result1.is_ok());
     assert!(p.eq(result1.unwrap()));
-    
+
     // O + p = p
     let result2 = infinity.add(p);
     assert!(result2.is_ok());
@@ -422,10 +422,10 @@ fn test_addition_with_infinity_is_identity() {
         x: None,
         y: None,
     };
-    
+
     let result = p.add(inf);
     assert!(result.is_ok());
-    
+
     let sum = result.unwrap();
     assert!(p.eq(sum));
 }
