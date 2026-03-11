@@ -567,7 +567,7 @@ fn test_copy_trait() {
 #[test]
 fn test_clone_trait() {
     let fe1 = FieldElement::new(5, 7);
-    let fe2 = fe1.clone();
+    let fe2 = fe1;
 
     assert_eq!(fe1.element, fe2.element);
     assert_eq!(fe1.order, fe2.order);

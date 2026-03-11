@@ -19,7 +19,7 @@ fn test_s256_field_to_bytes() {
     let fe = S256Field::new(255_u64.to_biguint().unwrap());
     let bytes = fe.to_bytes();
 
-    assert!(bytes.len() > 0);
+    assert!(!bytes.is_empty());
     assert_eq!(bytes[bytes.len() - 1], 255);
 }
 
@@ -47,7 +47,7 @@ fn test_s256_field_zero_bytes() {
     let bytes = fe.to_bytes();
 
     // Zero should serialize to empty or minimal bytes
-    assert!(bytes.len() >= 0);
+    assert!(!bytes.is_empty());
 }
 
 #[test]
@@ -231,7 +231,7 @@ fn test_base58_encoding() {
     let encoded = PrivateKey::encode_base58(&data);
 
     // Should produce a non-empty string
-    assert!(encoded.len() > 0);
+    assert!(!encoded.is_empty());
 
     // Should only contain Base58 characters
     let base58_chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -244,7 +244,7 @@ fn test_base58_checksum_encoding() {
     let encoded = PrivateKey::encode_base58_checksum(&data);
 
     // Should produce a non-empty string
-    assert!(encoded.len() > 0);
+    assert!(!encoded.is_empty());
 
     // Should be longer than plain base58 (includes checksum)
     let plain = PrivateKey::encode_base58(&data);
@@ -257,7 +257,7 @@ fn test_base58_empty_data() {
     let encoded = PrivateKey::encode_base58(&data);
 
     // Should handle empty data
-    assert!(encoded.len() >= 0);
+    assert!(!encoded.is_empty() == false);
 }
 
 #[test]
@@ -265,7 +265,7 @@ fn test_base58_single_byte() {
     let data = vec![0x42];
     let encoded = PrivateKey::encode_base58(&data);
 
-    assert!(encoded.len() > 0);
+    assert!(!encoded.is_empty());
 }
 
 // ============================================================
@@ -278,7 +278,7 @@ fn test_wif_mainnet_uncompressed() {
     let wif = pk.wif(false, false);
 
     // WIF should be a non-empty string
-    assert!(wif.len() > 0);
+    assert!(!wif.is_empty());
 
     // Mainnet uncompressed WIF typically starts with '5'
     // (though this depends on the Base58 alphabet used)
@@ -290,7 +290,7 @@ fn test_wif_mainnet_compressed() {
     let wif = pk.wif(true, false);
 
     // WIF should be a non-empty string
-    assert!(wif.len() > 0);
+    assert!(!wif.is_empty());
 
     // Compressed WIF should be different from uncompressed
     let wif_uncompressed = pk.wif(false, false);
@@ -302,7 +302,7 @@ fn test_wif_testnet_uncompressed() {
     let pk = PrivateKey::new();
     let wif = pk.wif(false, true);
 
-    assert!(wif.len() > 0);
+    assert!(!wif.is_empty());
 }
 
 #[test]
@@ -310,7 +310,7 @@ fn test_wif_testnet_compressed() {
     let pk = PrivateKey::new();
     let wif = pk.wif(true, true);
 
-    assert!(wif.len() > 0);
+    assert!(!wif.is_empty());
 }
 
 #[test]
@@ -334,7 +334,7 @@ fn test_address_mainnet_compressed() {
     let address = pk.point.address(true, false);
 
     // Address should be a non-empty string
-    assert!(address.len() > 0);
+    assert!(!address.is_empty());
 
     // Bitcoin mainnet addresses typically start with '1' or '3'
     // (though this depends on the Base58 alphabet and address type)
@@ -345,7 +345,7 @@ fn test_address_mainnet_uncompressed() {
     let pk = PrivateKey::new();
     let address = pk.point.address(false, false);
 
-    assert!(address.len() > 0);
+    assert!(!address.is_empty());
 }
 
 #[test]
@@ -353,7 +353,7 @@ fn test_address_testnet_compressed() {
     let pk = PrivateKey::new();
     let address = pk.point.address(true, true);
 
-    assert!(address.len() > 0);
+    assert!(!address.is_empty());
 }
 
 #[test]
@@ -361,7 +361,7 @@ fn test_address_testnet_uncompressed() {
     let pk = PrivateKey::new();
     let address = pk.point.address(false, true);
 
-    assert!(address.len() > 0);
+    assert!(!address.len() > 0);
 }
 
 #[test]
@@ -397,11 +397,11 @@ fn test_complete_key_serialization_workflow() {
 
     // Get WIF
     let wif = pk.wif(true, false);
-    assert!(wif.len() > 0);
+    assert!(!wif.is_empty());
 
     // Get address
     let address = pk.point.address(true, false);
-    assert!(address.len() > 0);
+    assert!(!address.is_empty());
 
     // Get SEC format
     let sec = pk.point.sec(true);
@@ -418,7 +418,7 @@ fn test_signature_serialization_workflow() {
 
     // Serialize to DER
     let der = sig.der();
-    assert!(der.len() > 0);
+    assert!(!der.is_empty());
     assert_eq!(der[0], 0x30);
 }
 

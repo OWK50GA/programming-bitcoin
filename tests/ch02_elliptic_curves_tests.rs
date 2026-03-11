@@ -65,7 +65,7 @@ fn test_point_inequality_different_x() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
     // Need to find another valid point on y^2 = x^3 + x + 1
     // This test assumes we can construct different points
-    assert!(p1.neq(p1) == false);
+    assert!(!p1.neq(p1));
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn test_is_valid_point_true() {
 
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), true);
+    assert!(result.unwrap());
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn test_is_valid_point_false() {
 
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), false);
+    assert!(result.unwrap() == false);
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_is_valid_point_another_invalid() {
 
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), false);
+    assert!(result.unwrap() == false);
 }
 
 // ============================================================
@@ -175,8 +175,8 @@ fn test_add_points_different_curves() {
 #[test]
 fn test_add_point_to_itself_returns_infinity() {
     // When adding a point to itself with same x, should return infinity
-    let p1 = Point::new(1, 1, 0, 1).unwrap();
-    let p2 = Point::new(1, 1, 0, 1).unwrap();
+    let _p1 = Point::new(1, 1, 0, 1).unwrap();
+    let _p2 = Point::new(1, 1, 0, 1).unwrap();
 
     // This test depends on the implementation details
     // The current implementation may handle point doubling differently
@@ -195,7 +195,7 @@ fn test_point_addition_on_small_curve() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
 
     // Adding point to itself
-    let result = p1.add(p1);
+    let _result = p1.add(p1);
     // Result depends on curve arithmetic implementation
 }
 
@@ -206,12 +206,13 @@ fn test_point_operations_preserve_curve() {
     let p2 = Point::new(1, 1, 0, 1).unwrap();
 
     let result = p1.add(p2);
-    if let Ok(sum) = result {
-        if sum.x.is_some() && sum.y.is_some() {
-            // Verify the result is on the curve
-            let is_valid = Point::is_valid_point(sum);
-            assert!(is_valid.is_ok());
-        }
+    if let Ok(sum) = result
+        && sum.x.is_some()
+        && sum.y.is_some()
+    {
+        // Verify the result is on the curve
+        let is_valid = Point::is_valid_point(sum);
+        assert!(is_valid.is_ok());
     }
 }
 
@@ -227,6 +228,7 @@ fn test_overflow_detection_y_squared() {
 
     // Should either succeed or fail gracefully with overflow error
     if result.is_err() {
+        #[allow(clippy::unnecessary_unwrap)]
         let err = result.unwrap_err();
         assert!(err.to_string().contains("overflow"));
     }
@@ -240,6 +242,7 @@ fn test_overflow_detection_x_cubed() {
 
     // Should handle overflow gracefully
     if result.is_err() {
+        #[allow(clippy::unnecessary_unwrap)]
         let err = result.unwrap_err();
         assert!(err.to_string().contains("overflow"));
     }
@@ -309,7 +312,7 @@ fn test_point_copy_trait() {
 #[test]
 fn test_point_clone_trait() {
     let p1 = Point::new(1, 1, 0, 1).unwrap();
-    let p2 = p1.clone();
+    let p2 = p1;
 
     assert!(p1.eq(p2));
 }

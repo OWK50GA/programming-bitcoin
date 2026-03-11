@@ -40,7 +40,7 @@ fn test_s256_field_from_bytes() {
 fn test_s256_field_to_bytes() {
     let fe = S256Field::new(255_u64.to_biguint().unwrap());
     let bytes = fe.to_bytes();
-    assert!(bytes.len() > 0);
+    assert!(!bytes.is_empty());
     assert_eq!(bytes[bytes.len() - 1], 255);
 }
 
@@ -260,7 +260,7 @@ fn test_s256_point_is_valid() {
     let result = S256Point::is_valid_point(g);
 
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), true);
+    assert!(result.unwrap());
 }
 
 // ============================================================
@@ -376,7 +376,7 @@ fn test_private_key_hex() {
     let hex = pk.hex();
 
     // Should be a valid hex string
-    assert!(hex.len() > 0);
+    assert!(!hex.is_empty());
     assert!(hex.chars().all(|c| c.is_ascii_hexdigit()));
 }
 
@@ -422,7 +422,7 @@ fn test_sign_and_verify() {
     let public_key = pk.point;
     let result = public_key.verify_sig(z, sig);
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), true);
+    assert!(result.unwrap());
 }
 
 #[test]
@@ -437,7 +437,7 @@ fn test_verify_with_wrong_message() {
     // Verifying with different message should fail
     let result = public_key.verify_sig(z2, sig);
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), false);
+    assert!(result.unwrap() == false);
 }
 
 // ============================================================
