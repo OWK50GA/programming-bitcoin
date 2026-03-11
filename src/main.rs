@@ -1,5 +1,5 @@
 use programming_bitcoin::ex01::FieldElement;
-use programming_bitcoin::ex03::test_point;
+use programming_bitcoin::s256_point::test_point;
 
 fn main() {
     // Create a new FieldElement

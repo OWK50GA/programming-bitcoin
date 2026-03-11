@@ -1,6 +1,9 @@
 // Finite Fields
 
-use std::{fmt::{self}, ops::{Add, Div, Mul, Sub}};
+use std::{
+    fmt::{self},
+    ops::{Add, Div, Mul, Sub},
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct FieldElement {
@@ -14,7 +17,10 @@ impl Add for FieldElement {
         assert_eq!(self.order, rhs.order);
         let mut s = self.element + rhs.element;
         s %= self.order;
-        FieldElement { order: self.order, element: s }
+        FieldElement {
+            order: self.order,
+            element: s,
+        }
     }
 }
 
@@ -23,7 +29,10 @@ impl Sub for FieldElement {
     fn sub(self, rhs: Self) -> Self::Output {
         assert_eq!(self.order, rhs.order);
         let n = (self.element as i128 - rhs.element as i128).rem_euclid(self.order as i128) as u64;
-        FieldElement { element: n, order: self.order }
+        FieldElement {
+            element: n,
+            order: self.order,
+        }
     }
 }
 
@@ -33,7 +42,10 @@ impl Mul for FieldElement {
         assert_eq!(self.order, rhs.order);
         let r = ((self.element as u128 * rhs.element as u128) % self.order as u128) as u64;
 
-        FieldElement { order: self.order, element: r }
+        FieldElement {
+            order: self.order,
+            element: r,
+        }
     }
 }
 
@@ -69,28 +81,40 @@ pub trait ToFieldElement {
 impl ToFieldElement for u8 {
     fn to_felt(self, order: u64) -> FieldElement {
         assert!((self as u64) < order);
-        FieldElement { order, element: self as u64 }
+        FieldElement {
+            order,
+            element: self as u64,
+        }
     }
 }
 
 impl ToFieldElement for u16 {
     fn to_felt(self, order: u64) -> FieldElement {
         assert!((self as u64) < order);
-        FieldElement { order, element: self as u64 }
+        FieldElement {
+            order,
+            element: self as u64,
+        }
     }
 }
 
 impl ToFieldElement for u32 {
     fn to_felt(self, order: u64) -> FieldElement {
         assert!((self as u64) < order);
-        FieldElement { order, element: self as u64 }
+        FieldElement {
+            order,
+            element: self as u64,
+        }
     }
 }
 
 impl ToFieldElement for u64 {
     fn to_felt(self, order: u64) -> FieldElement {
         assert!(self < order);
-        FieldElement { order, element: self }
+        FieldElement {
+            order,
+            element: self,
+        }
     }
 }
 
@@ -149,18 +173,28 @@ impl FieldElement {
     }
 
     pub fn inv(&self) -> Option<Self> {
-        Self::mod_inv(self.element as i128, self.order as i128).map(|x| FieldElement { order: self.order, element: x as u64 })
+        Self::mod_inv(self.element as i128, self.order as i128).map(|x| FieldElement {
+            order: self.order,
+            element: x as u64,
+        })
     }
 
     pub fn pow(&self, exponent: i128) -> Self {
         let p = self.order as u128;
         if exponent >= 0 {
             let r = Self::mod_pow(self.element as u128, exponent as u128, p) as u64;
-            FieldElement { order: self.order, element: r }
+            FieldElement {
+                order: self.order,
+                element: r,
+            }
         } else {
-            let inv = Self::mod_inv(self.element as i128, self.order as i128).expect("no inverse exists for this element");
+            let inv = Self::mod_inv(self.element as i128, self.order as i128)
+                .expect("no inverse exists for this element");
             let r = Self::mod_pow(inv as u128, (-exponent) as u128, p) as u64;
-            FieldElement { order: self.order, element: r }
+            FieldElement {
+                order: self.order,
+                element: r,
+            }
         }
     }
 

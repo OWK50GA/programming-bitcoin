@@ -134,7 +134,7 @@ impl Point {
         } else {
             let change_y = other.y.unwrap() - self.y.unwrap();
             let change_x = other.x.unwrap() - self.x.unwrap();
-    
+
             change_y / change_x
         };
 
