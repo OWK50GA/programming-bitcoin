@@ -7,7 +7,7 @@ use num_bigint::{BigUint, ToBigInt, ToBigUint};
 use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
 
 use crate::{
-    ch03::s256_field::{S256Field, ToS256Field},
+    ch03_ecc::s256_field::{S256Field, ToS256Field},
     signature::Signature,
 };
 use std::{
@@ -26,7 +26,6 @@ pub struct S256Point {
 impl Add for S256Point {
     type Output = Result<Self, Error>;
     fn add(self, rhs: Self) -> Self::Output {
-        let order = BigUint::from_bytes_be(&FIELD_SIZE);
         if self.a != rhs.a || self.b != rhs.b {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -55,15 +54,15 @@ impl Add for S256Point {
             }
 
             // Now y1 == y2 -> could be doubling. If y1 == 0 => tangent vertical => O
-            let zero = 0_u64.to_felts256(order.clone());
+            let zero = 0_u64.to_felts256();
             if y1 == zero {
                 return Ok(S256Point::infinity(a, b));
             }
 
             // Doubling with non-zero y: slope = (3*x1^2 + a) / (2*y1)
             let x_squared = x1.clone().pow(2.to_bigint().unwrap());
-            let numerator = x_squared * 3_u64.to_felts256(order.clone()) + a;
-            let denominator = y1 * 2_u64.to_felts256(order.clone());
+            let numerator = x_squared * 3_u64.to_felts256() + a;
+            let denominator = y1 * 2_u64.to_felts256();
 
             // denominator should not be zero here, but double-check to avoid panic
             if denominator.element == 0.to_biguint().unwrap() {
@@ -103,8 +102,8 @@ const S256B: u64 = 7;
 
 impl S256Point {
     fn get_coefs() -> (S256Field, S256Field) {
-        let a = S256A.to_felts256(BigUint::from_bytes_be(&FIELD_SIZE));
-        let b = S256B.to_felts256(BigUint::from_bytes_be(&FIELD_SIZE));
+        let a = S256A.to_felts256();
+        let b = S256B.to_felts256();
 
         (a, b)
     }
@@ -245,31 +244,10 @@ impl S256Point {
 }
 
 pub fn test_point() {
-    // let x1 = S256Field::new(192.to_biguint().unwrap());
-    // let y1 = S256Field::new(105.to_biguint().unwrap());
-    // let x2 = S256Field::new(17.to_biguint().unwrap());
-    // let y2 = S256Field::new(56.to_biguint().unwrap());
-    // let x3 = S256Field::new(15.to_biguint().unwrap());
-    // let y3 = S256Field::new(86.to_biguint().unwrap());
-
-    // let point1 = S256Point::new(Some(x1), Some(y1)).unwrap();
-    // let point2 = S256Point::new(Some(x2), Some(y2)).unwrap();
-    // println!("{:?}", point1);
-    // println!("{:?}", point2);
-
-    // let point3 = point1 + point2;
-    // println!("{:?}", point3);
-
-    // let point4 = S256Point::new(Some(x3), Some(y3)).unwrap();
-    // println!("{:?}", point4);
-
-    // let point4_scaled = point4.scalar_mult(7.to_biguint().unwrap());
-    // println!("{:?}", point4_scaled);
-
     let group_hex = hex::encode(FIELD_SIZE); // -> P -> Prime for the field
     let curve_hex = hex::encode(CURVE_ORDER); // N -> group order
-    println!("Group Hex: {group_hex}");
-    println!("Curve Hex: {curve_hex}");
+    println!("Field Prime, p: {group_hex}");
+    println!("Curve Order, n: {curve_hex}");
 
     let generator = S256Point::generator();
 

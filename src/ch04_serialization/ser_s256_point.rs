@@ -1,15 +1,14 @@
 use num_bigint::{BigUint, ToBigInt, ToBigUint};
 use secp256k1::constants::{FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
 
-use crate::ch04::ch04_signature::Signature;
-use crate::ch04::secret::PrivateKey;
-use crate::ch04::s256_field::{S256Field, ToS256Field};
+use crate::ch04_serialization::ser_signature::Signature;
+use crate::ch04_serialization::ser_private_key::PrivateKey;
+use crate::ch04_serialization::ser_s256_field::{S256Field, ToS256Field};
 use std::{
     io::{Error, ErrorKind},
     ops::Add,
 };
 use ripemd::{Ripemd160, Digest as RipemdDigest};
-// use crate::ch02::ex02::Point;
 
 #[derive(Debug, Clone)]
 pub struct S256Point {

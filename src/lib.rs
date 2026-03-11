@@ -1,11 +1,11 @@
-mod ch01;
-pub use ch01::*;
+mod ch01_finite_fields;
+pub use ch01_finite_fields::*;
 
-mod ch02;
-pub use ch02::*;
+mod ch02_elliptic_curves;
+pub use ch02_elliptic_curves::*;
 
-mod ch03;
-pub use ch03::*;
+mod ch03_ecc;
+pub use ch03_ecc::*;
 
-mod ch04;
-pub use ch04::{s256_field as ch04_field, s256_point as ch04_point, secret as ch04_secret};
+mod ch04_serialization;
+pub use ch04_serialization::*;

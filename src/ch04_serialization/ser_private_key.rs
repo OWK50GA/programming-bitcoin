@@ -1,9 +1,9 @@
-use crate::ch04::{s256_point, ch04_signature::Signature};
-use crate::ch04::s256_field::{S256Field};
+use crate::ch04_serialization::{ser_s256_point, ser_signature::Signature};
+use crate::ch04_serialization::ser_s256_field::{S256Field};
 use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
-use s256_point::S256Point;
+use ser_s256_point::S256Point;
 use secp256k1::constants::FIELD_SIZE;
 use sha2::{Sha256, Digest};
 use std::io::Error;

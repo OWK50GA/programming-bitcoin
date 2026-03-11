@@ -1,10 +1,10 @@
-use crate::ch03::{s256_point, signature};
+use crate::ch03_ecc::{s256_point, signature};
 use crate::s256_field::S256Field;
 use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
 use s256_point::S256Point;
-use secp256k1::constants::FIELD_SIZE;
+use secp256k1::constants::{CURVE_ORDER};
 use sha2::Sha256;
 use signature::Signature;
 use std::io::Error;
@@ -40,7 +40,7 @@ impl PrivateKey {
     // TODO: Implement the deterministic k algorithm
 
     pub fn sign(self, z: S256Field) -> Result<Signature, Error> {
-        let big_n = BigUint::from_bytes_be(&FIELD_SIZE);
+        let big_n = BigUint::from_bytes_be(&CURVE_ORDER);
 
         let mut k_bytes = [0_u8; 32];
         OsRng.fill_bytes(&mut k_bytes);
@@ -62,7 +62,7 @@ impl PrivateKey {
         let mut k = [0_u8; 32];
         let mut v = [0_u8; 32];
 
-        let n_field = S256Field::from_bytes(&FIELD_SIZE);
+        let n_field = S256Field::from_bytes(&CURVE_ORDER);
 
         if z.geq(&n_field) {
             z = z - n_field.clone();

@@ -1,5 +1,5 @@
-pub mod ex03;
+pub mod felts_point;
 pub mod s256_field;
 pub mod s256_point;
-pub mod secret;
+pub mod private_key;
 pub mod signature;

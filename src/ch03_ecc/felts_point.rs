@@ -1,4 +1,4 @@
-use crate::{ch01::ex01::FieldElement, ex01::ToFieldElement};
+use crate::{ch01_finite_fields::field_element::FieldElement, field_element::ToFieldElement};
 use std::{
     io::{Error, ErrorKind},
     ops::Add,

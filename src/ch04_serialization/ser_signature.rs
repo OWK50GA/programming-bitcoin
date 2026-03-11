@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ch04_field::S256Field;
+use crate::ser_s256_field::S256Field;
 
 #[derive(Debug, Clone)]
 pub struct Signature {

@@ -1,4 +1,4 @@
-use programming_bitcoin::ex01::FieldElement;
+use programming_bitcoin::field_element::FieldElement;
 use programming_bitcoin::s256_point::test_point;
 
 fn main() {

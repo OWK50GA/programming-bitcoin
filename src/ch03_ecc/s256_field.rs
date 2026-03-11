@@ -89,11 +89,12 @@ impl fmt::Display for S256Field {
 }
 
 pub trait ToS256Field {
-    fn to_felts256(self, order: BigUint) -> S256Field;
+    fn to_felts256(self) -> S256Field;
 }
 
 impl ToS256Field for u8 {
-    fn to_felts256(self, order: BigUint) -> S256Field {
+    fn to_felts256(self) -> S256Field {
+        let order = BigUint::from_bytes_be(&FIELD_SIZE);
         assert!(self.to_biguint().unwrap() < order);
         S256Field {
             order,
@@ -103,7 +104,8 @@ impl ToS256Field for u8 {
 }
 
 impl ToS256Field for u16 {
-    fn to_felts256(self, order: BigUint) -> S256Field {
+    fn to_felts256(self) -> S256Field {
+        let order = BigUint::from_bytes_be(&FIELD_SIZE);
         assert!(self.to_biguint().unwrap() < order);
         S256Field {
             order,
@@ -113,7 +115,8 @@ impl ToS256Field for u16 {
 }
 
 impl ToS256Field for u32 {
-    fn to_felts256(self, order: BigUint) -> S256Field {
+    fn to_felts256(self) -> S256Field {
+        let order = BigUint::from_bytes_be(&FIELD_SIZE);
         assert!(self.to_biguint().unwrap() < order);
         S256Field {
             order,
@@ -123,7 +126,8 @@ impl ToS256Field for u32 {
 }
 
 impl ToS256Field for u64 {
-    fn to_felts256(self, order: BigUint) -> S256Field {
+    fn to_felts256(self) -> S256Field {
+        let order = BigUint::from_bytes_be(&FIELD_SIZE);
         assert!(self.to_biguint().unwrap() < order);
         S256Field {
             order,
@@ -157,7 +161,8 @@ impl S256Field {
     }
 
     pub fn equals(&self, other: &Self) -> bool {
-        self.element == other.element && self.order == other.order
+        // Not checking for order because they have to be both FIELD_SIZE
+        self.element == other.element
     }
 
     pub fn nequals(&self, other: &Self) -> bool {
@@ -165,11 +170,13 @@ impl S256Field {
     }
 
     pub fn geq(&self, other: &Self) -> bool {
-        self.element > other.element && self.order == other.order
+        // Not checking for order because they have to be both FIELD_SIZE
+        self.element > other.element
     }
 
     pub fn leq(&self, other: &Self) -> bool {
-        self.element < other.element && self.order == other.order
+        // Not checking for order because they have to be both FIELD_SIZE
+        self.element < other.element
     }
 
     pub fn inv(&self) -> Option<Self> {
@@ -180,7 +187,7 @@ impl S256Field {
     }
 
     pub fn pow(&self, exponent: BigInt) -> Self {
-        let p = &self.order;
+        let p = &BigUint::from_bytes_be(&FIELD_SIZE);
         if exponent
             >= BigUint::from_bytes_be(&0_u64.to_be_bytes())
                 .to_bigint()
