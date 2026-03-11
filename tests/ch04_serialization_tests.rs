@@ -257,7 +257,7 @@ fn test_base58_empty_data() {
     let encoded = PrivateKey::encode_base58(&data);
 
     // Should handle empty data
-    assert!(!encoded.is_empty() == false);
+    assert!(encoded.is_empty());
 }
 
 #[test]
@@ -437,11 +437,11 @@ fn test_point_serialization_all_formats() {
 
     // Address mainnet
     let addr_main = point.address(true, false);
-    assert!(addr_main.len() > 0);
+    assert!(!addr_main.is_empty());
 
     // Address testnet
     let addr_test = point.address(true, true);
-    assert!(addr_test.len() > 0);
+    assert!(!addr_test.is_empty());
 }
 
 // ============================================================
@@ -520,7 +520,7 @@ fn test_address_generator_point() {
     let g = S256Point::generator();
 
     let address = g.address(true, false);
-    assert!(address.len() > 0);
+    assert!(!address.is_empty());
 }
 
 // ============================================================

@@ -105,7 +105,7 @@ fn test_is_valid_point_false() {
 
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
-    assert!(result.unwrap() == false);
+    assert!(!result.unwrap());
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_is_valid_point_another_invalid() {
 
     let result = Point::is_valid_point(p);
     assert!(result.is_ok());
-    assert!(result.unwrap() == false);
+    assert!(!result.unwrap());
 }
 
 // ============================================================

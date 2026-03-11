@@ -437,7 +437,7 @@ fn test_verify_with_wrong_message() {
     // Verifying with different message should fail
     let result = public_key.verify_sig(z2, sig);
     assert!(result.is_ok());
-    assert!(result.unwrap() == false);
+    assert!(!result.unwrap());
 }
 
 // ============================================================
