@@ -9,7 +9,7 @@ use std::{
 use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
 use secp256k1::constants::FIELD_SIZE;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct S256Field {
     pub order: BigUint,
     pub element: BigUint,

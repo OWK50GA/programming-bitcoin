@@ -116,7 +116,7 @@ impl Point {
             });
         }
 
-        if self.eq(other) && self.y.unwrap() == 0 * self.x.unwrap() {
+        if self.eq(other) && self.y.unwrap() == 0 {
             return Ok(Point {
                 a: self.a,
                 b: self.b,

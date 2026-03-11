@@ -11,7 +11,7 @@ use std::io::Error;
 
 type HmacSha256 = Hmac<Sha256>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PrivateKey {
     pub secret_bytes: S256Field,
     pub point: S256Point,
@@ -33,9 +33,7 @@ impl PrivateKey {
 
     pub fn hex(&self) -> String {
         let secret = self.secret_bytes.element.to_bytes_be();
-        let hex_string = hex::encode(secret);
-
-        hex_string
+        hex::encode(secret)
     }
 
     // TODO: Implement the deterministic k algorithm
@@ -43,7 +41,7 @@ impl PrivateKey {
     pub fn sign(&self, z: S256Field) -> Result<Signature, Error> {
         let n = BigUint::from_bytes_be(&CURVE_ORDER);
 
-        let k = Self::deterministic_k(&self, z.clone());
+        let k = Self::deterministic_k(self, z.clone());
         let r_point = S256Point::generate_point(k.clone().element);
         let r = r_point.x.unwrap().element.clone();
 
@@ -93,11 +91,11 @@ impl PrivateKey {
         hmac.update(&secret_bytes);
         hmac.update(&z_bytes);
 
-        k = hmac.finalize().into_bytes().try_into().unwrap();
+        k = hmac.finalize().into_bytes().into();
 
         let mut hmac = HmacSha256::new_from_slice(&k).expect("Invalid key");
         hmac.update(&v);
-        v = hmac.finalize().into_bytes().try_into().unwrap();
+        v = hmac.finalize().into_bytes().into();
 
         let mut hmac = HmacSha256::new_from_slice(&k).expect("Invalid key");
         hmac.update(&v);
@@ -105,12 +103,12 @@ impl PrivateKey {
         hmac.update(&secret_bytes);
         hmac.update(&z_bytes);
 
-        k = hmac.finalize().into_bytes().try_into().unwrap();
+        k = hmac.finalize().into_bytes().into();
 
         loop {
             let mut hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
             hmac.update(&v);
-            v = hmac.finalize().into_bytes().try_into().unwrap();
+            v = hmac.finalize().into_bytes().into();
             let candidate = BigUint::from_bytes_be(&v);
             if candidate >= 1u32.to_biguint().unwrap() && candidate < n_field.element {
                 return S256Field::new(candidate);
@@ -118,10 +116,10 @@ impl PrivateKey {
             let mut hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
             hmac.update(&v);
             hmac.update(&[0]);
-            k = hmac.finalize().into_bytes().try_into().unwrap();
+            k = hmac.finalize().into_bytes().into();
             let mut hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
             hmac.update(&v);
-            v = hmac.finalize().into_bytes().try_into().unwrap();
+            v = hmac.finalize().into_bytes().into();
         }
     }
 }

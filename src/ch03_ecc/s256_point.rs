@@ -15,7 +15,7 @@ use std::{
     ops::Add,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct S256Point {
     pub a: S256Field,
     pub b: S256Field,

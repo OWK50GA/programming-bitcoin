@@ -177,7 +177,7 @@ impl Point {
 
     pub fn scalar_mult(&self, scalar: u64) -> Self {
         let mut coef = scalar;
-        let mut current = self.clone();
+        let mut current = *self;
         let mut result = Self::infinity(self.a, self.b);
 
         while coef > 0 {
