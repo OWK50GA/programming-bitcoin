@@ -11,6 +11,7 @@ use std::io::Error;
 
 type HmacSha256 = Hmac<Sha256>;
 
+#[derive(Debug, Clone)]
 pub struct PrivateKey {
     pub secret_bytes: S256Field,
     pub point: S256Point,
@@ -39,23 +40,35 @@ impl PrivateKey {
 
     // TODO: Implement the deterministic k algorithm
 
-    pub fn sign(self, z: S256Field) -> Result<Signature, Error> {
-        let big_n = BigUint::from_bytes_be(&CURVE_ORDER);
-
-        let mut k_bytes = [0_u8; 32];
-        OsRng.fill_bytes(&mut k_bytes);
+    pub fn sign(&self, z: S256Field) -> Result<Signature, Error> {
+        let n = BigUint::from_bytes_be(&CURVE_ORDER);
 
         let k = Self::deterministic_k(&self, z.clone());
-        let r = S256Point::generate_point(k.clone().element).x.unwrap();
+        let r_point = S256Point::generate_point(k.clone().element);
+        let r = r_point.x.unwrap().element.clone();
 
-        let k_inv = k.inv().unwrap();
-        let mut s = (z + r.clone() * self.secret_bytes) * k_inv;
+        // All arithmetic must be done modulo n (CURVE_ORDER), not p (FIELD_SIZE)
+        let k_inv = k.element.modinv(&n).ok_or_else(|| {
+            Error::new(std::io::ErrorKind::InvalidInput, "k has no inverse mod n")
+        })?;
+        
+        // s = (z + r * private_key) / k mod n
+        let z_mod_n = &z.element % &n;
+        let private_key_mod_n = &self.secret_bytes.element % &n;
+        let r_mod_n = &r % &n;
+        
+        let s_numerator = (z_mod_n + (r_mod_n * private_key_mod_n)) % &n;
+        let mut s = (s_numerator * k_inv) % &n;
 
-        if s.element > &big_n / 2.to_biguint().unwrap() {
-            s = S256Field::new(big_n - s.element);
+        // Use low-s value (BIP 62)
+        if s > &n / 2_u64.to_biguint().unwrap() {
+            s = &n - s;
         }
 
-        Ok(Signature { r, s })
+        Ok(Signature { 
+            r: S256Field::new(r), 
+            s: S256Field::new(s) 
+        })
     }
 
     pub fn deterministic_k(&self, mut z: S256Field) -> S256Field {
@@ -68,11 +81,11 @@ impl PrivateKey {
             z = z - n_field.clone();
         }
 
-        let mut z_bytes = [0_u8; 32];
-        z_bytes.copy_from_slice(&z.to_bytes());
+        let mut z_bytes = vec![];
+        z_bytes.extend_from_slice(&z.to_bytes());
 
-        let mut secret_bytes = [0_u8; 32];
-        secret_bytes.copy_from_slice(&self.secret_bytes.to_bytes());
+        let mut secret_bytes = vec![];
+        secret_bytes.extend_from_slice(&self.secret_bytes.to_bytes());
 
         let mut hmac = HmacSha256::new_from_slice(&k).expect("Invalid key");
         hmac.update(&v);

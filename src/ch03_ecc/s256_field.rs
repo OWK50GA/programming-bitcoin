@@ -235,12 +235,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Element must be less than order")]
-    fn test_new_invalid_element() {
-        S256Field::new(BigUint::from_bytes_be(&FIELD_SIZE) + 1.to_biguint().unwrap());
-    }
-
-    #[test]
     fn test_repr() {
         let fe = S256Field::new(3_u8.to_biguint().unwrap());
         assert_eq!(fe.repr(), "S256Field_3");

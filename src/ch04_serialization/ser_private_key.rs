@@ -4,7 +4,7 @@ use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
 use rand::{RngCore, rngs::OsRng};
 use ser_s256_point::S256Point;
-use secp256k1::constants::FIELD_SIZE;
+use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE};
 use sha2::{Sha256, Digest};
 use std::io::Error;
 type HmacSha256 = Hmac<Sha256>;
@@ -56,21 +56,21 @@ impl PrivateKey {
         Ok(Signature { r, s })
     }
 
-    fn deterministic_k(&self, mut z: S256Field) -> S256Field {
+    pub fn deterministic_k(&self, mut z: S256Field) -> S256Field {
         let mut k = [0_u8; 32];
         let mut v = [0_u8; 32];
 
-        let n_field = S256Field::from_bytes(&FIELD_SIZE);
+        let n_field = S256Field::from_bytes(&CURVE_ORDER);
 
         if z.geq(&n_field) {
             z = z - n_field.clone();
         }
 
-        let mut z_bytes = [0_u8; 32];
-        z_bytes.copy_from_slice(&z.to_bytes());
+        let mut z_bytes = vec![];
+        z_bytes.extend_from_slice(&z.to_bytes());
 
-        let mut secret_bytes = [0_u8; 32];
-        secret_bytes.copy_from_slice(&self.secret_bytes.to_bytes());
+        let mut secret_bytes = vec![];
+        secret_bytes.extend_from_slice(&self.secret_bytes.to_bytes());
 
         let mut hmac = HmacSha256::new_from_slice(&k).expect("Invalid key");
         hmac.update(&v);

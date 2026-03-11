@@ -154,7 +154,6 @@ impl S256Point {
 
         let (a, b) = Self::get_coefs();
 
-        println!("x: {}", hex::encode(gx));
         let x = S256Field::new(BigUint::from_bytes_be(&gx));
         let y = S256Field::new(BigUint::from_bytes_be(&gy));
 
@@ -246,26 +245,26 @@ impl S256Point {
 
         let x_bytes = x.element.to_bytes_be();
         if compressed {
-            let mut sec_format_key = [0_u8; 33];
+            let mut sec_format_key = vec![];
             let parity_byte = if y_parity == 0.to_biguint().unwrap() {
                 [2_u8]
             } else {
                 [3_u8]
             };
-            sec_format_key.copy_from_slice(&parity_byte);
+            sec_format_key.extend_from_slice(&parity_byte);
 
-            sec_format_key.copy_from_slice(&x_bytes);
+            sec_format_key.extend_from_slice(&x_bytes);
 
-            sec_format_key.to_vec()
+            sec_format_key
         } else {
-            let mut sec_format_key = [0_u8; 65];
-            sec_format_key.copy_from_slice(&[4_u8]);
+            let mut sec_format_key = vec![];
+            sec_format_key.extend_from_slice(&[4_u8]);
             let y_bytes = y.element.to_bytes_be();
 
-            sec_format_key.copy_from_slice(&x_bytes);
-            sec_format_key.copy_from_slice(&y_bytes);
+            sec_format_key.extend_from_slice(&x_bytes);
+            sec_format_key.extend_from_slice(&y_bytes);
 
-            sec_format_key.to_vec()
+            sec_format_key
         }
     }
 

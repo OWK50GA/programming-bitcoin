@@ -2,10 +2,10 @@ use std::io::{Error, ErrorKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
-    a: u64,
-    b: u64,
-    x: Option<u64>,
-    y: Option<u64>, // Option because of the point at infinity
+    pub a: u64,
+    pub b: u64,
+    pub x: Option<u64>,
+    pub y: Option<u64>, // Option because of the point at infinity
 }
 
 impl Point {
