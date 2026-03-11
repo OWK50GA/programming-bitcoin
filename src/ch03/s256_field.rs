@@ -1,4 +1,5 @@
-// Finite Fields
+// For the to_felts256, the order should not be an argument, 
+// it should be Field Size from the secp256k1 library
 
 use std::{
     fmt::{self},
@@ -6,7 +7,7 @@ use std::{
 };
 
 use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
-use secp256k1::constants::{FIELD_SIZE};
+use secp256k1::constants::FIELD_SIZE;
 
 #[derive(Debug, Clone)]
 pub struct S256Field {
@@ -31,7 +32,7 @@ impl Sub for S256Field {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self::Output {
         assert_eq!(self.order, rhs.order);
-        // let n = self.element.to_bigint().unwrap() - rhs.element.to_bigint().unwrap() % (self.order.to_bigint().unwrap());
+
         let n = if rhs.element > self.element {
             let quotient = &rhs.element / &self.order;
             let scalar = quotient + 1.to_biguint().unwrap();
@@ -132,10 +133,23 @@ impl ToS256Field for u64 {
 }
 
 impl S256Field {
-    pub fn new(element: BigUint) -> S256Field {
+    pub fn new(mut element: BigUint) -> S256Field {
         let p = BigUint::from_bytes_be(&FIELD_SIZE);
-        assert!(element < p, "Element must be less than order");
+        if element >= p {
+            element %= p.clone();
+        }
         S256Field { order: p, element }
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let big_bytes = BigUint::from_bytes_be(bytes);
+        
+        Self::new(big_bytes)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let big_self = &self.element;
+        big_self.to_bytes_be()
     }
 
     pub fn repr(&self) -> String {
@@ -198,22 +212,6 @@ impl S256Field {
             }
         }
     }
-
-    // pub fn reduce(element: BigInt, order: BigUint) -> BigUint {
-    //     let mut result = BigUint::from_bytes_be(&0_u8.to_be_bytes());
-    //     let zero = BigUint::from_bytes_be(&0_u8.to_be_bytes()).to_bigint().unwrap();
-    //     if element < order.to_bigint().unwrap() && element >= zero {
-    //         result = element.to_biguint().unwrap();
-    //     } else if element >= order.to_bigint().unwrap() {
-    //         result = (&element % order.to_bigint().unwrap()).to_biguint().unwrap();
-    //     } else if element < zero {
-    //         let quotient = (-element.clone()) / order.to_bigint().unwrap();
-    //         result = (((order.to_bigint().unwrap()) * (quotient + BigInt::from_bytes_be(Sign::NoSign, &1_u8.to_be_bytes())) + element.clone()) % order.to_bigint().unwrap()).to_biguint().unwrap();
-    //         // result = ((order as i128 + element) % order as i128) as u64;
-    //     }
-
-    //     result
-    // }
 }
 
 #[cfg(test)]

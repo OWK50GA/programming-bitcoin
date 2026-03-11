@@ -1,7 +1,7 @@
 use num_bigint::{BigUint, ToBigInt, ToBigUint};
 use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE, GENERATOR_X, GENERATOR_Y};
 
-use crate::ch03::s256_field::{S256Field, ToS256Field};
+use crate::{ch03::s256_field::{S256Field, ToS256Field}, signature::Signature};
 use std::{
     io::{Error, ErrorKind},
     ops::Add,
@@ -10,10 +10,10 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub struct S256Point {
-    a: S256Field,
-    b: S256Field,
-    x: Option<S256Field>,
-    y: Option<S256Field>, // Option because of the point at infinity
+    pub a: S256Field,
+    pub b: S256Field,
+    pub x: Option<S256Field>,
+    pub y: Option<S256Field>, // Option because of the point at infinity
 }
 
 impl Add for S256Point {
@@ -156,7 +156,12 @@ impl S256Point {
         let x = S256Field::new(BigUint::from_bytes_be(&gx));
         let y = S256Field::new(BigUint::from_bytes_be(&gy));
 
-        S256Point { a, b, x: Some(x), y: Some(y) }
+        S256Point {
+            a,
+            b,
+            x: Some(x),
+            y: Some(y),
+        }
     }
 
     pub fn infinity(a: S256Field, b: S256Field) -> Self {
@@ -215,6 +220,21 @@ impl S256Point {
 
         result
     }
+
+    pub fn generate_point(scalar: BigUint) -> Self {
+        let generator = Self::generator();
+        generator.scalar_mult(scalar)
+    }
+
+    pub fn verify_sig(&self, z: S256Field, sig: Signature) -> Result<bool, Error> {
+        let u = z / sig.s.clone();
+        let v = sig.r.clone() / sig.s.clone();
+
+        let generator = Self::generator();
+        let total = (generator.scalar_mult(u.element) + self.scalar_mult(v.element))?;
+
+        Ok(total.x.unwrap().element == sig.r.element)
+    }
 }
 
 pub fn test_point() {
@@ -245,8 +265,7 @@ pub fn test_point() {
     println!("Curve Hex: {curve_hex}");
 
     let generator = S256Point::generator();
-    
+
     let infty = generator.scalar_mult(BigUint::from_bytes_be(&CURVE_ORDER));
     println!("{:#?}", infty);
-
 }
