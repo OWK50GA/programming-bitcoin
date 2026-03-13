@@ -272,9 +272,11 @@ fn test_base58_single_byte() {
 // UNIT TESTS - WIF Format (Wallet Import Format)
 // ============================================================
 
+const SECRET: &str = "secret";
+
 #[test]
 fn test_wif_mainnet_uncompressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let wif = pk.wif(false, false);
 
     // WIF should be a non-empty string
@@ -286,7 +288,7 @@ fn test_wif_mainnet_uncompressed() {
 
 #[test]
 fn test_wif_mainnet_compressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let wif = pk.wif(true, false);
 
     // WIF should be a non-empty string
@@ -299,7 +301,7 @@ fn test_wif_mainnet_compressed() {
 
 #[test]
 fn test_wif_testnet_uncompressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let wif = pk.wif(false, true);
 
     assert!(!wif.is_empty());
@@ -307,7 +309,7 @@ fn test_wif_testnet_uncompressed() {
 
 #[test]
 fn test_wif_testnet_compressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let wif = pk.wif(true, true);
 
     assert!(!wif.is_empty());
@@ -315,7 +317,7 @@ fn test_wif_testnet_compressed() {
 
 #[test]
 fn test_wif_different_networks() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
 
     let mainnet = pk.wif(true, false);
     let testnet = pk.wif(true, true);
@@ -330,7 +332,7 @@ fn test_wif_different_networks() {
 
 #[test]
 fn test_address_mainnet_compressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let address = pk.point.address(true, false);
 
     // Address should be a non-empty string
@@ -342,7 +344,7 @@ fn test_address_mainnet_compressed() {
 
 #[test]
 fn test_address_mainnet_uncompressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let address = pk.point.address(false, false);
 
     assert!(!address.is_empty());
@@ -350,7 +352,7 @@ fn test_address_mainnet_uncompressed() {
 
 #[test]
 fn test_address_testnet_compressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let address = pk.point.address(true, true);
 
     assert!(!address.is_empty());
@@ -358,7 +360,7 @@ fn test_address_testnet_compressed() {
 
 #[test]
 fn test_address_testnet_uncompressed() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let address = pk.point.address(false, true);
 
     assert!(!address.len() > 0);
@@ -366,7 +368,7 @@ fn test_address_testnet_uncompressed() {
 
 #[test]
 fn test_address_different_compression() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
 
     let compressed = pk.point.address(true, false);
     let uncompressed = pk.point.address(false, false);
@@ -377,7 +379,7 @@ fn test_address_different_compression() {
 
 #[test]
 fn test_address_different_networks() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
 
     let mainnet = pk.point.address(true, false);
     let testnet = pk.point.address(true, true);
@@ -393,7 +395,7 @@ fn test_address_different_networks() {
 #[test]
 fn test_complete_key_serialization_workflow() {
     // Generate key
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
 
     // Get WIF
     let wif = pk.wif(true, false);
@@ -410,7 +412,7 @@ fn test_complete_key_serialization_workflow() {
 
 #[test]
 fn test_signature_serialization_workflow() {
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
     let z = S256Field::new(12345_u64.to_biguint().unwrap());
 
     // Sign
@@ -477,10 +479,10 @@ fn test_der_deterministic() {
 
 #[test]
 fn test_wif_deterministic() {
-    // Note: PrivateKey::new() uses random generation, so we can't test
+    // Note: PrivateKey::new(SECRET) uses random generation, so we can't test
     // determinism directly. This test just ensures WIF is consistent
     // for the same key object.
-    let pk = PrivateKey::new();
+    let pk = PrivateKey::new(SECRET);
 
     let wif1 = pk.wif(true, false);
     let wif2 = pk.wif(true, false);
@@ -573,8 +575,8 @@ fn test_base58_checksum_includes_hash() {
 
 #[test]
 fn test_multiple_keys_unique_wif() {
-    let pk1 = PrivateKey::new();
-    let pk2 = PrivateKey::new();
+    let pk1 = PrivateKey::new(SECRET);
+    let pk2 = PrivateKey::new("another_secret");
 
     let wif1 = pk1.wif(true, false);
     let wif2 = pk2.wif(true, false);
@@ -585,8 +587,8 @@ fn test_multiple_keys_unique_wif() {
 
 #[test]
 fn test_multiple_keys_unique_addresses() {
-    let pk1 = PrivateKey::new();
-    let pk2 = PrivateKey::new();
+    let pk1 = PrivateKey::new(SECRET);
+    let pk2 = PrivateKey::new("another_secret");
 
     let addr1 = pk1.point.address(true, false);
     let addr2 = pk2.point.address(true, false);
@@ -597,8 +599,8 @@ fn test_multiple_keys_unique_addresses() {
 
 #[test]
 fn test_multiple_keys_unique_sec() {
-    let pk1 = PrivateKey::new();
-    let pk2 = PrivateKey::new();
+    let pk1 = PrivateKey::new(SECRET);
+    let pk2 = PrivateKey::new("another_secret");
 
     let sec1 = pk1.point.sec(true);
     let sec2 = pk2.point.sec(true);
