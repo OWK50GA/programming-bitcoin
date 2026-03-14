@@ -1,9 +1,12 @@
 use std::io::Error;
 
-use serde::{Serialize, Serializer, ser::{SerializeStruct}};
-use sha2::{Sha256, Digest};
+use serde::{Serialize, Serializer, ser::SerializeStruct};
+use sha2::{Digest, Sha256};
 
-use crate::{transaction::{Transaction, decode_varint, encode_varint}, tx_fetcher::TxFetcher};
+use crate::{
+    transaction::{Transaction, decode_varint, encode_varint},
+    tx_fetcher::TxFetcher,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct TxId(pub [u8; 32]);
@@ -32,12 +35,17 @@ pub struct TxIn {
     pub tx_id: TxId,
     pub output_index: u32,
     pub script_sig: String,
-    pub sequence: u32
+    pub sequence: u32,
 }
 
 impl TxIn {
     pub fn new(tx_id: [u8; 32], prev_index: u32, script_sig: String, sequence: u32) -> Self {
-        TxIn { tx_id: TxId(tx_id), output_index: prev_index, script_sig, sequence }
+        TxIn {
+            tx_id: TxId(tx_id),
+            output_index: prev_index,
+            script_sig,
+            sequence,
+        }
     }
 
     pub fn repr(&self) -> String {
@@ -46,34 +54,42 @@ impl TxIn {
 
     pub fn parse(data: &[u8], mut index: usize) -> (Self, usize) {
         let mut displacement = 0;
-        let previous_tx_id: [u8; 32] = data[index..index+32].try_into().unwrap();
+        let previous_tx_id: [u8; 32] = data[index..index + 32].try_into().unwrap();
 
         index += 32;
         displacement += 32;
 
-        let output_index_bytes = &data[index..index+4].try_into().unwrap();
+        let output_index_bytes = &data[index..index + 4].try_into().unwrap();
         let output_index = u32::from_le_bytes(*output_index_bytes);
 
         index += 4;
         displacement += 4;
 
         let start_index = index;
-        let (script_len, new_index) = decode_varint(&data, index);
+        let (script_len, new_index) = decode_varint(data, index);
         let varint_size = new_index - start_index;
         index = new_index;
         displacement += varint_size;
-        let script_buf = &data[index..index+(script_len as usize)];
+        let script_buf = &data[index..index + (script_len as usize)];
         let script_sig = hex::encode(script_buf);
 
         index += script_len as usize;
         displacement += script_len as usize;
 
-        let seq_bytes = &data[index..index+4].try_into().unwrap();
+        let seq_bytes = &data[index..index + 4].try_into().unwrap();
         let sequence = u32::from_le_bytes(*seq_bytes);
 
         displacement += 4;
 
-        (TxIn { tx_id: TxId(previous_tx_id), output_index, script_sig, sequence }, displacement)
+        (
+            TxIn {
+                tx_id: TxId(previous_tx_id),
+                output_index,
+                script_sig,
+                sequence,
+            },
+            displacement,
+        )
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -95,18 +111,20 @@ impl TxIn {
     }
 
     pub async fn fetch(&self, testnet: bool) -> Transaction {
-        TxFetcher::fetch(&hex::encode(&self.tx_id.0), testnet, true, &mut None).await.unwrap()
+        TxFetcher::fetch(&hex::encode(self.tx_id.0), testnet, true, &mut None)
+            .await
+            .unwrap()
     }
 
     pub async fn value(&self, testnet: bool) -> u64 {
-        let tx_outs = Self::fetch(&self, testnet).await.outputs;
+        let tx_outs = self.fetch(testnet).await.outputs;
 
         let index = self.output_index;
         tx_outs[index as usize].amount
     }
 
     pub async fn script_pubkey(&self, testnet: bool) -> String {
-        let tx_outs = Self::fetch(&self, testnet).await.outputs;
+        let tx_outs = self.fetch(testnet).await.outputs;
 
         let index = self.output_index;
         let script_pubkey = &tx_outs[index as usize].script_pubkey;
@@ -117,9 +135,10 @@ impl TxIn {
 
 impl Serialize for TxId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer {
-        let mut bytes = self.0.clone();
+    where
+        S: Serializer,
+    {
+        let mut bytes = self.0;
         bytes.reverse();
         serializer.serialize_str(&hex::encode(bytes))
     }
@@ -127,8 +146,9 @@ impl Serialize for TxId {
 
 impl Serialize for TxIn {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer {
+    where
+        S: serde::Serializer,
+    {
         let mut txin = serializer.serialize_struct("TxIn", 4)?;
         txin.serialize_field("txid", &self.tx_id)?;
         txin.serialize_field("output_index", &self.output_index)?;
