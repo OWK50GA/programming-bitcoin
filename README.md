@@ -22,14 +22,34 @@ The code is organized by chapters, mirroring the book's progression:
   - Implementation of the secp256k1 curve used in Bitcoin
   - Large number handling with BigUint/BigInt for cryptographic operations
 
+- `src/ch04/` - Serialization
+  - Serialization of secp256k1 points and signatures
+  - SEC (Standards for Efficient Cryptography) format implementation
+
+- `src/ch05/` - Transactions
+  - Bitcoin transaction parsing and structure
+  - Variable-length integer encoding/decoding
+  - Transaction input/output handling
+
 - `src/lib.rs` - Library entry point
 - `src/main.rs` - Executable entry point
+- `tests/` - Integration tests for each chapter
 
 ## Dependencies
 
-This project uses:
-- `num-bigint` and `num-traits` for arbitrary-precision arithmetic
-- Standard Rust libraries
+This project uses the following Rust crates:
+- `num-bigint` and `num-traits` - Arbitrary-precision arithmetic for large numbers
+- `secp256k1` - secp256k1 elliptic curve cryptography library
+- `hex` - Hexadecimal encoding/decoding
+- `serde` and `serde_json` - Serialization/deserialization
+- `sha2` - SHA-256 hashing
+- `hmac` - HMAC (Hash-based Message Authentication Code)
+- `rand` - Random number generation
+- `bs58` - Base58 encoding (used in Bitcoin addresses)
+- `ripemd` - RIPEMD-160 hashing
+- `reqwest` - HTTP client for API interactions
+- `tokio` - Asynchronous runtime
+- `dotenvy` - Environment variable loading
 
 ## Building and Running
 
@@ -51,20 +71,47 @@ cargo test
 cargo run
 ```
 
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment. The CI pipeline includes:
+
+- **Automated Testing**: Runs `cargo test` on multiple Rust versions and operating systems
+- **Code Formatting**: Ensures code follows Rust formatting standards with `cargo fmt`
+- **Linting**: Checks for common issues with `cargo clippy`
+- **Security Auditing**: Scans dependencies for vulnerabilities
+
+### CI Configuration
+
+The CI workflow is defined in `.github/workflows/ci.yml` and includes jobs for:
+- Building and testing on Linux, macOS, and Windows
+- Code quality checks
+- Dependency auditing
+
+To set up CI/CD locally or contribute:
+1. Ensure your code passes `cargo fmt` and `cargo clippy`
+2. Run the full test suite with `cargo test`
+3. Push to a branch to trigger CI checks
+
 ## Key Concepts Implemented
 
 - **Finite Fields**: Custom FieldElement struct supporting modular arithmetic
 - **Elliptic Curves**: Point addition, doubling, and scalar multiplication
 - **secp256k1**: Bitcoin's elliptic curve with proper large number handling
+- **Serialization**: SEC format for public key compression and uncompressed formats
+- **Digital Signatures**: ECDSA signature creation and verification
+- **Transactions**: Bitcoin transaction structure, parsing, and validation
+- **Variable-Length Integers**: CompactSize encoding for Bitcoin protocol
 - **Cryptographic Primitives**: Modular inverse, exponentiation, and reduction
 
 ## Learning Goals
 
 This implementation serves as a learning tool to:
-- Understand Bitcoin's mathematical foundations
-- Practice Rust programming with complex mathematical concepts
-- Implement cryptographic algorithms from scratch
+- Understand Bitcoin's mathematical foundations from finite fields to transaction validation
+- Practice Rust programming with complex mathematical concepts and cryptography
+- Implement cryptographic algorithms and protocols from scratch
 - Compare Python and Rust approaches to the same problems
+- Learn Bitcoin's serialization formats and transaction structure
+- Gain experience with real-world cryptographic libraries and best practices
 
 ## References
 
