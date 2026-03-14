@@ -20,7 +20,7 @@ use crate::transaction::Transaction;
 pub fn decode(transaction_hex: &str) -> Result<String, Box<dyn Error>> {
     let tx_bytes = hex::decode(transaction_hex).map_err(|e| format!("Hex decode error: {}", e))?;
     // let transaction = Transaction::consensus_decode(&mut tx_bytes.as_slice());
-    Ok(Transaction::parse(&tx_bytes))
+    Ok(serde_json::to_string_pretty(&Transaction::parse(&tx_bytes))?)
     // serde_json::to_string_pretty(&transaction)
 
     // println!("Transaction: {}", json_transaction);

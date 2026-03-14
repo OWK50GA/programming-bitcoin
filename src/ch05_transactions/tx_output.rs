@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::transaction::decode_varint;
+use crate::transaction::{decode_varint, encode_varint};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TxOut {
@@ -32,5 +32,19 @@ impl TxOut {
         index += script_pubkey_len as usize;
 
         (Self { amount, script_pubkey }, index)
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut result = Vec::new();
+
+        let amount_bytes = self.amount.to_le_bytes();
+        let script_pubkey_bytes = hex::decode(&self.script_pubkey).unwrap();
+        let compact_size_len = encode_varint(script_pubkey_bytes.len() as u64);
+
+        result.extend_from_slice(&amount_bytes);
+        result.extend_from_slice(&compact_size_len);
+        result.extend_from_slice(&script_pubkey_bytes);
+
+        result
     }
 }
