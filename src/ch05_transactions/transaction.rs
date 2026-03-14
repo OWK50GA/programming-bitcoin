@@ -1,0 +1,209 @@
+use serde::Serialize;
+use serde::ser::SerializeStruct;
+use sha2::{Digest, Sha256};
+
+use crate::{
+    tx_input::{TxId, TxIn},
+    tx_output::TxOut,
+};
+
+#[derive(Debug, Clone)]
+pub struct Transaction {
+    pub version: u32,
+    pub inputs: Vec<TxIn>,
+    pub outputs: Vec<TxOut>,
+    pub locktime: u32,
+    pub testnet: bool,
+}
+
+impl Serialize for Transaction {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut tx = serializer.serialize_struct("Transaction", 5)?;
+        tx.serialize_field("transaction_id", &self.compute_tx_id())?;
+        tx.serialize_field("version", &self.version)?;
+        tx.serialize_field("inputs", &self.inputs)?;
+        tx.serialize_field("outputs", &self.outputs)?;
+        tx.serialize_field("locktime", &self.locktime)?;
+        tx.serialize_field("testnet", &self.testnet)?;
+
+        tx.end()
+    }
+}
+
+// Reads the number, and then the index from where to begin the next read
+pub fn decode_varint(data: &[u8], index: usize) -> (u64, usize) {
+    let i = data[index];
+
+    match i {
+        0xfd => {
+            let start = index + 1;
+            let to_read = data[start..=start + 1].try_into().unwrap();
+            (u16::from_le_bytes(to_read) as u64, start + 2)
+        }
+        0xfe => {
+            let start = index + 1;
+            let to_read = data[start..=start + 3].try_into().unwrap();
+            (u32::from_le_bytes(to_read) as u64, start + 4)
+        }
+        0xff => {
+            let start = index + 1;
+            let to_read = data[start..=start + 7].try_into().unwrap();
+            (u64::from_le_bytes(to_read), start + 8)
+        }
+        _ => (i as u64, index + 1),
+    }
+}
+
+pub fn encode_varint(number: u64) -> Vec<u8> {
+    match number {
+        0..=0xfc => (number as u8).to_le_bytes().to_vec(),
+        0xfd..=0xFFFF => {
+            let mut bytes = vec![0xfd];
+            bytes.extend_from_slice(&(number as u16).to_le_bytes());
+            bytes
+        }
+        0x10000..=0xFFFFFFFF => {
+            let mut bytes = vec![0xfe];
+            bytes.extend_from_slice(&(number as u32).to_le_bytes());
+            bytes
+        }
+        _ => {
+            let mut bytes = vec![0xff];
+            bytes.extend_from_slice(&number.to_le_bytes());
+            bytes
+        }
+    }
+}
+
+impl Transaction {
+    pub fn new(
+        version: u32,
+        inputs: Vec<TxIn>,
+        outputs: Vec<TxOut>,
+        locktime: u32,
+        testnet: bool,
+    ) -> Transaction {
+        Transaction {
+            version,
+            inputs,
+            outputs,
+            locktime,
+            testnet,
+        }
+    }
+
+    pub fn compute_tx_id(&self) -> TxId {
+        let tx = hex::decode(self.serialize()).unwrap();
+        let mut hasher = Sha256::new();
+        hasher.update(tx);
+        let hash1 = hasher.finalize();
+
+        let mut hasher = Sha256::new();
+        hasher.update(hash1);
+        let hash2 = hasher.finalize();
+
+        TxId(hash2.into())
+    }
+
+    pub fn parse(serialization: &[u8]) -> Transaction {
+        let mut index = 0;
+
+        let version_bytes: [u8; 4] = serialization[index..index + 4].try_into().unwrap();
+        let version = u32::from_le_bytes(version_bytes);
+
+        // Check out the stream thing on page 115
+        index += 4;
+
+        let (input_count, new_index) = decode_varint(serialization, index);
+
+        index = new_index;
+
+        let mut inputs = Vec::new();
+
+        for _ in 0..input_count {
+            let (input, displacement) = TxIn::parse(serialization, index);
+            inputs.push(input);
+            index += displacement;
+        }
+
+        let (output_count, new_index) = decode_varint(serialization, index);
+        index = new_index;
+
+        let mut outputs = Vec::new();
+
+        for _ in 0..output_count {
+            let (output, new_index) = TxOut::parse(serialization, index);
+            outputs.push(output);
+            index = new_index
+        }
+
+        let locktime_bytes = serialization[index..index + 4].try_into().unwrap();
+        let locktime = u32::from_le_bytes(locktime_bytes);
+
+        Transaction {
+            inputs,
+            version,
+            outputs,
+            locktime,
+            testnet: true,
+        }
+
+        // serde_json::to_string_pretty(&transaction).unwrap()
+    }
+
+    pub fn serialize(&self) -> String {
+        let mut result = Vec::new();
+
+        let version_bytes = &self.version.to_le_bytes();
+        result.extend_from_slice(version_bytes);
+
+        let inputs_len = self.inputs.len();
+        let inputs_len_bytes = encode_varint(inputs_len as u64);
+        result.extend_from_slice(&inputs_len_bytes);
+
+        for txin in &self.inputs {
+            let ser = txin.serialize();
+            result.extend_from_slice(&ser);
+        }
+
+        let outputs_len = self.outputs.len();
+        let outputs_len_bytes = encode_varint(outputs_len as u64);
+        result.extend_from_slice(&outputs_len_bytes);
+
+        for txout in &self.outputs {
+            let ser = txout.serialize();
+            result.extend_from_slice(&ser);
+        }
+
+        let locktime_bytes = &self.locktime.to_le_bytes();
+        result.extend_from_slice(locktime_bytes);
+
+        hex::encode(result)
+    }
+
+    pub async fn get_tx_fee(&self) -> u64 {
+        let mut input_amount = 0;
+        let mut output_amount = 0;
+
+        for txin in &self.inputs {
+            let input_value = txin.value(true).await;
+            input_amount += input_value;
+        }
+
+        for txout in &self.outputs {
+            let output_val = txout.amount;
+            output_amount += output_val;
+        }
+
+        input_amount - output_amount
+    }
+}
+
+// impl Decodable for Transaction {
+//     fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, Error> {
+
+//     }
+// }

@@ -16,9 +16,11 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    pub fn new() -> Self {
-        let mut key = [0_u8; 32];
-        OsRng.fill_bytes(&mut key);
+    pub fn new(secret: &str) -> Self {
+        let bytes_secret = secret.as_bytes();
+        let mut hasher = Sha256::new();
+        hasher.update(bytes_secret);
+        let key: [u8; 32] = hasher.finalize().into();
 
         let felt = S256Field::from_bytes(&key);
         let point = S256Point::generate_point(felt.clone().element);

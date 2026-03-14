@@ -4,3 +4,4 @@
 .github/workflows/release.yml
 .github/workflows/security-audit.yml
 .github/workflows/README.md
+.env
