@@ -3,6 +3,7 @@ use serde::ser::SerializeStruct;
 use sha2::{Digest, Sha256};
 
 use crate::{
+    decode_varint, encode_varint,
     tx_input::{TxId, TxIn},
     tx_output::TxOut,
 };
@@ -30,51 +31,6 @@ impl Serialize for Transaction {
         tx.serialize_field("testnet", &self.testnet)?;
 
         tx.end()
-    }
-}
-
-// Reads the number, and then the index from where to begin the next read
-pub fn decode_varint(data: &[u8], index: usize) -> (u64, usize) {
-    let i = data[index];
-
-    match i {
-        0xfd => {
-            let start = index + 1;
-            let to_read = data[start..=start + 1].try_into().unwrap();
-            (u16::from_le_bytes(to_read) as u64, start + 2)
-        }
-        0xfe => {
-            let start = index + 1;
-            let to_read = data[start..=start + 3].try_into().unwrap();
-            (u32::from_le_bytes(to_read) as u64, start + 4)
-        }
-        0xff => {
-            let start = index + 1;
-            let to_read = data[start..=start + 7].try_into().unwrap();
-            (u64::from_le_bytes(to_read), start + 8)
-        }
-        _ => (i as u64, index + 1),
-    }
-}
-
-pub fn encode_varint(number: u64) -> Vec<u8> {
-    match number {
-        0..=0xfc => (number as u8).to_le_bytes().to_vec(),
-        0xfd..=0xFFFF => {
-            let mut bytes = vec![0xfd];
-            bytes.extend_from_slice(&(number as u16).to_le_bytes());
-            bytes
-        }
-        0x10000..=0xFFFFFFFF => {
-            let mut bytes = vec![0xfe];
-            bytes.extend_from_slice(&(number as u32).to_le_bytes());
-            bytes
-        }
-        _ => {
-            let mut bytes = vec![0xff];
-            bytes.extend_from_slice(&number.to_le_bytes());
-            bytes
-        }
     }
 }
 

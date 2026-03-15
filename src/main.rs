@@ -1,5 +1,6 @@
 use std::env;
 
+use bitcoin::opcodes::{Opcode};
 use dotenvy::dotenv;
 // use programming_bitcoin::field_element::FieldElement;
 // use programming_bitcoin::s256_point::test_point;
@@ -19,5 +20,9 @@ fn main() {
 
     let json = decode(tx).unwrap();
 
-    println!("{json}");
+    // println!("{json}");
+
+    let code = Opcode::from(0x76);
+    println!("{:?}", code);
+
 }
