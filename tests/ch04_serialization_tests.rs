@@ -333,7 +333,7 @@ fn test_wif_different_networks() {
 #[test]
 fn test_address_mainnet_compressed() {
     let pk = PrivateKey::new(SECRET);
-    let address = pk.point.address(true, false);
+    let address = pk.public_key.0.address(true, false);
 
     // Address should be a non-empty string
     assert!(!address.is_empty());
@@ -345,7 +345,7 @@ fn test_address_mainnet_compressed() {
 #[test]
 fn test_address_mainnet_uncompressed() {
     let pk = PrivateKey::new(SECRET);
-    let address = pk.point.address(false, false);
+    let address = pk.public_key.0.address(false, false);
 
     assert!(!address.is_empty());
 }
@@ -353,7 +353,7 @@ fn test_address_mainnet_uncompressed() {
 #[test]
 fn test_address_testnet_compressed() {
     let pk = PrivateKey::new(SECRET);
-    let address = pk.point.address(true, true);
+    let address = pk.public_key.0.address(true, true);
 
     assert!(!address.is_empty());
 }
@@ -361,7 +361,7 @@ fn test_address_testnet_compressed() {
 #[test]
 fn test_address_testnet_uncompressed() {
     let pk = PrivateKey::new(SECRET);
-    let address = pk.point.address(false, true);
+    let address = pk.public_key.0.address(false, true);
 
     assert!(!address.len() > 0);
 }
@@ -370,8 +370,8 @@ fn test_address_testnet_uncompressed() {
 fn test_address_different_compression() {
     let pk = PrivateKey::new(SECRET);
 
-    let compressed = pk.point.address(true, false);
-    let uncompressed = pk.point.address(false, false);
+    let compressed = pk.public_key.0.address(true, false);
+    let uncompressed = pk.public_key.0.address(false, false);
 
     // Different compression should produce different addresses
     assert_ne!(compressed, uncompressed);
@@ -381,8 +381,8 @@ fn test_address_different_compression() {
 fn test_address_different_networks() {
     let pk = PrivateKey::new(SECRET);
 
-    let mainnet = pk.point.address(true, false);
-    let testnet = pk.point.address(true, true);
+    let mainnet = pk.public_key.0.address(true, false);
+    let testnet = pk.public_key.0.address(true, true);
 
     // Different networks should produce different addresses
     assert_ne!(mainnet, testnet);
@@ -402,11 +402,11 @@ fn test_complete_key_serialization_workflow() {
     assert!(!wif.is_empty());
 
     // Get address
-    let address = pk.point.address(true, false);
+    let address = pk.public_key.0.address(true, false);
     assert!(!address.is_empty());
 
     // Get SEC format
-    let sec = pk.point.sec(true);
+    let sec = pk.public_key.0.sec(true);
     assert_eq!(sec.len(), 33);
 }
 
@@ -590,8 +590,8 @@ fn test_multiple_keys_unique_addresses() {
     let pk1 = PrivateKey::new(SECRET);
     let pk2 = PrivateKey::new("another_secret");
 
-    let addr1 = pk1.point.address(true, false);
-    let addr2 = pk2.point.address(true, false);
+    let addr1 = pk1.public_key.0.address(true, false);
+    let addr2 = pk2.public_key.0.address(true, false);
 
     // Different keys should have different addresses
     assert_ne!(addr1, addr2);
@@ -602,8 +602,8 @@ fn test_multiple_keys_unique_sec() {
     let pk1 = PrivateKey::new(SECRET);
     let pk2 = PrivateKey::new("another_secret");
 
-    let sec1 = pk1.point.sec(true);
-    let sec2 = pk2.point.sec(true);
+    let sec1 = pk1.public_key.0.sec(true);
+    let sec2 = pk2.public_key.0.sec(true);
 
     // Different keys should have different SEC
     assert_ne!(sec1, sec2);

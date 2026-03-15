@@ -12,8 +12,11 @@ type HmacSha256 = Hmac<Sha256>;
 #[derive(Debug, Clone, Default)]
 pub struct PrivateKey {
     pub secret_bytes: S256Field,
-    pub point: S256Point,
+    pub public_key: PublicKey,
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct PublicKey(pub S256Point);
 
 impl PrivateKey {
     pub fn new(secret: &str) -> Self {
@@ -27,7 +30,7 @@ impl PrivateKey {
 
         PrivateKey {
             secret_bytes: felt,
-            point,
+            public_key: PublicKey(point),
         }
     }
 
