@@ -10,26 +10,32 @@ This repository contains a Rust implementation of the exercises and concepts fro
 
 The code is organized by chapters, mirroring the book's progression:
 
-- `src/ch01/` - Finite Fields
+- `src/ch01_finite_fields/` - Finite Fields
   - Basic field arithmetic operations
   - FieldElement struct with addition, subtraction, multiplication, division, and exponentiation
 
-- `src/ch02/` - Elliptic Curves over Finite Fields
+- `src/ch02_elliptic_curves/` - Elliptic Curves over Finite Fields
   - Point operations on elliptic curves
   - Point addition and scalar multiplication
 
-- `src/ch03/` - Elliptic Curves over secp256k1
+- `src/ch03_ecc/` - Elliptic Curves over secp256k1
   - Implementation of the secp256k1 curve used in Bitcoin
+  - Basically elliptic curve cryptography, as the name states
   - Large number handling with BigUint/BigInt for cryptographic operations
 
-- `src/ch04/` - Serialization
+- `src/ch04_serialization/` - Serialization
   - Serialization of secp256k1 points and signatures
   - SEC (Standards for Efficient Cryptography) format implementation
 
-- `src/ch05/` - Transactions
+- `src/ch05_transactions/` - Transactions
   - Bitcoin transaction parsing and structure
   - Variable-length integer encoding/decoding
   - Transaction input/output handling
+
+- `src/cho6_script` - Script 
+  - Bitcoin's smart contract language Script
+  - Implements parsing, serialization and evaluation of scripts from ScriptPubkeys and ScriptSigs
+  - Implements opcodes used to evaluate scripts
 
 - `src/lib.rs` - Library entry point
 - `src/main.rs` - Executable entry point
