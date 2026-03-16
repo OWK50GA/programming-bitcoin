@@ -79,7 +79,7 @@ fn test_s256_field_sqrt() {
 #[test]
 fn test_sec_compressed_format() {
     let g = S256Point::generator();
-    let sec = g.sec(true);
+    let sec = g.to_sec(true);
 
     // Compressed SEC should be 33 bytes
     assert_eq!(sec.len(), 33);
@@ -91,7 +91,7 @@ fn test_sec_compressed_format() {
 #[test]
 fn test_sec_uncompressed_format() {
     let g = S256Point::generator();
-    let sec = g.sec(false);
+    let sec = g.to_sec(false);
 
     // Uncompressed SEC should be 65 bytes
     assert_eq!(sec.len(), 65);
@@ -103,8 +103,8 @@ fn test_sec_uncompressed_format() {
 #[test]
 fn test_sec_parse_uncompressed() {
     let g = S256Point::generator();
-    let sec = g.sec(false);
-    let parsed = g.parse(sec);
+    let sec = g.to_sec(false);
+    let parsed = S256Point::parse(sec);
 
     // Parsed point should match original
     assert_eq!(parsed.x.unwrap().element, g.x.unwrap().element);
@@ -114,8 +114,8 @@ fn test_sec_parse_uncompressed() {
 #[test]
 fn test_sec_parse_compressed() {
     let g = S256Point::generator();
-    let sec = g.sec(true);
-    let parsed = g.parse(sec);
+    let sec = g.to_sec(true);
+    let parsed = S256Point::parse(sec);
 
     // Parsed point should match original
     assert_eq!(parsed.x.unwrap().element, g.x.unwrap().element);
@@ -127,8 +127,8 @@ fn test_sec_round_trip_compressed() {
     let scalar = 12345_u64.to_biguint().unwrap();
     let point = S256Point::generate_point(scalar);
 
-    let sec = point.sec(true);
-    let parsed = point.parse(sec);
+    let sec = point.to_sec(true);
+    let parsed = S256Point::parse(sec);
 
     assert_eq!(point.x.unwrap().element, parsed.x.unwrap().element);
     assert_eq!(point.y.unwrap().element, parsed.y.unwrap().element);
@@ -139,8 +139,8 @@ fn test_sec_round_trip_uncompressed() {
     let scalar = 54321_u64.to_biguint().unwrap();
     let point = S256Point::generate_point(scalar);
 
-    let sec = point.sec(false);
-    let parsed = point.parse(sec);
+    let sec = point.to_sec(false);
+    let parsed = S256Point::parse(sec);
 
     assert_eq!(point.x.unwrap().element, parsed.x.unwrap().element);
     assert_eq!(point.y.unwrap().element, parsed.y.unwrap().element);
@@ -153,7 +153,7 @@ fn test_sec_even_y_coordinate() {
     let y_element = &g.y.as_ref().unwrap().element;
     let is_even = y_element % 2_u64.to_biguint().unwrap() == 0_u64.to_biguint().unwrap();
 
-    let sec = g.sec(true);
+    let sec = g.to_sec(true);
 
     if is_even {
         assert_eq!(sec[0], 0x02);
@@ -172,7 +172,7 @@ fn test_der_signature_format() {
     let s = S256Field::new(67890_u64.to_biguint().unwrap());
     let sig = Signature::new(r, s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // DER should start with 0x30
     assert_eq!(der[0], 0x30);
@@ -187,7 +187,7 @@ fn test_der_signature_structure() {
     let s = S256Field::new(200_u64.to_biguint().unwrap());
     let sig = Signature::new(r, s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // Check DER structure
     assert_eq!(der[0], 0x30); // SEQUENCE tag
@@ -201,7 +201,7 @@ fn test_der_with_large_values() {
     let large_s = S256Field::new(BigUint::from_bytes_be(&FIELD_SIZE) / 3_u64.to_biguint().unwrap());
     let sig = Signature::new(large_r, large_s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // Should produce valid DER encoding
     assert_eq!(der[0], 0x30);
@@ -215,7 +215,7 @@ fn test_der_high_bit_padding() {
     let s = S256Field::new(0x90_u64.to_biguint().unwrap());
     let sig = Signature::new(r, s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // DER should be valid
     assert_eq!(der[0], 0x30);
@@ -406,7 +406,7 @@ fn test_complete_key_serialization_workflow() {
     assert!(!address.is_empty());
 
     // Get SEC format
-    let sec = pk.public_key.0.sec(true);
+    let sec = pk.public_key.0.to_sec(true);
     assert_eq!(sec.len(), 33);
 }
 
@@ -419,7 +419,7 @@ fn test_signature_serialization_workflow() {
     let sig = pk.sign(z.clone()).unwrap();
 
     // Serialize to DER
-    let der = sig.der();
+    let der = sig.to_der();
     assert!(!der.is_empty());
     assert_eq!(der[0], 0x30);
 }
@@ -430,11 +430,11 @@ fn test_point_serialization_all_formats() {
     let point = S256Point::generate_point(scalar);
 
     // SEC compressed
-    let sec_compressed = point.sec(true);
+    let sec_compressed = point.to_sec(true);
     assert_eq!(sec_compressed.len(), 33);
 
     // SEC uncompressed
-    let sec_uncompressed = point.sec(false);
+    let sec_uncompressed = point.to_sec(false);
     assert_eq!(sec_uncompressed.len(), 65);
 
     // Address mainnet
@@ -455,8 +455,8 @@ fn test_sec_deterministic() {
     let scalar = 77777_u64.to_biguint().unwrap();
     let point = S256Point::generate_point(scalar);
 
-    let sec1 = point.sec(true);
-    let sec2 = point.sec(true);
+    let sec1 = point.to_sec(true);
+    let sec2 = point.to_sec(true);
 
     // Same point should produce same SEC
     assert_eq!(sec1, sec2);
@@ -470,8 +470,8 @@ fn test_der_deterministic() {
     let sig1 = Signature::new(r.clone(), s.clone());
     let sig2 = Signature::new(r, s);
 
-    let der1 = sig1.der();
-    let der2 = sig2.der();
+    let der1 = sig1.to_der();
+    let der2 = sig2.to_der();
 
     // Same signature should produce same DER
     assert_eq!(der1, der2);
@@ -498,8 +498,8 @@ fn test_wif_deterministic() {
 fn test_sec_generator_point() {
     let g = S256Point::generator();
 
-    let sec_compressed = g.sec(true);
-    let sec_uncompressed = g.sec(false);
+    let sec_compressed = g.to_sec(true);
+    let sec_uncompressed = g.to_sec(false);
 
     assert_eq!(sec_compressed.len(), 33);
     assert_eq!(sec_uncompressed.len(), 65);
@@ -511,7 +511,7 @@ fn test_der_small_signature_values() {
     let s = S256Field::new(1_u64.to_biguint().unwrap());
     let sig = Signature::new(r, s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // Should handle small values correctly
     assert_eq!(der[0], 0x30);
@@ -534,12 +534,12 @@ fn test_sec_format_validation() {
     let point = S256Point::generate_point(12345_u64.to_biguint().unwrap());
 
     // Compressed
-    let sec_comp = point.sec(true);
+    let sec_comp = point.to_sec(true);
     assert!(sec_comp[0] == 0x02 || sec_comp[0] == 0x03);
     assert_eq!(sec_comp.len(), 33);
 
     // Uncompressed
-    let sec_uncomp = point.sec(false);
+    let sec_uncomp = point.to_sec(false);
     assert_eq!(sec_uncomp[0], 0x04);
     assert_eq!(sec_uncomp.len(), 65);
 }
@@ -550,7 +550,7 @@ fn test_der_format_validation() {
     let s = S256Field::new(888_u64.to_biguint().unwrap());
     let sig = Signature::new(r, s);
 
-    let der = sig.der();
+    let der = sig.to_der();
 
     // Validate DER structure
     assert_eq!(der[0], 0x30); // SEQUENCE
@@ -602,9 +602,121 @@ fn test_multiple_keys_unique_sec() {
     let pk1 = PrivateKey::new(SECRET);
     let pk2 = PrivateKey::new("another_secret");
 
-    let sec1 = pk1.public_key.0.sec(true);
-    let sec2 = pk2.public_key.0.sec(true);
+    let sec1 = pk1.public_key.0.to_sec(true);
+    let sec2 = pk2.public_key.0.to_sec(true);
 
     // Different keys should have different SEC
     assert_ne!(sec1, sec2);
+}
+
+// ============================================================
+// UNIT TESTS - Signature::from_der
+// DER layout: 0x30 <total_len> 0x02 <r_len> <r_bytes> 0x02 <s_len> <s_bytes>
+// r and s may have a leading 0x00 padding byte when their high bit is set.
+// ============================================================
+
+#[test]
+fn test_from_der_round_trip() {
+    let r = S256Field::new(99999_u64.to_biguint().unwrap());
+    let s = S256Field::new(12345_u64.to_biguint().unwrap());
+    let sig = Signature::new(r, s);
+
+    let der = sig.to_der();
+    let parsed = Signature::from_der(&der).unwrap();
+
+    assert_eq!(parsed.r.element, sig.r.element);
+    assert_eq!(parsed.s.element, sig.s.element);
+}
+
+#[test]
+fn test_from_der_large_values_round_trip() {
+    let r = S256Field::new(BigUint::from_bytes_be(&FIELD_SIZE) / 2_u64.to_biguint().unwrap());
+    let s = S256Field::new(BigUint::from_bytes_be(&FIELD_SIZE) / 3_u64.to_biguint().unwrap());
+    let sig = Signature::new(r, s);
+
+    let der = sig.to_der();
+    let parsed = Signature::from_der(&der).unwrap();
+
+    assert_eq!(parsed.r.element, sig.r.element);
+    assert_eq!(parsed.s.element, sig.s.element);
+}
+
+#[test]
+fn test_from_der_rejects_too_short() {
+    let result = Signature::from_der(&[0x30, 0x06, 0x02]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_from_der_rejects_wrong_sequence_tag() {
+    // Replace 0x30 with 0x31
+    let r = S256Field::new(1_u64.to_biguint().unwrap());
+    let s = S256Field::new(1_u64.to_biguint().unwrap());
+    let mut der = Signature::new(r, s).to_der();
+    der[0] = 0x31;
+    assert!(Signature::from_der(&der).is_err());
+}
+
+#[test]
+fn test_from_der_rejects_length_mismatch() {
+    let r = S256Field::new(1_u64.to_biguint().unwrap());
+    let s = S256Field::new(1_u64.to_biguint().unwrap());
+    let mut der = Signature::new(r, s).to_der();
+    // Corrupt the total-length byte
+    der[1] = 0xff;
+    assert!(Signature::from_der(&der).is_err());
+}
+
+#[test]
+fn test_from_der_rejects_wrong_integer_tag_for_r() {
+    let r = S256Field::new(1_u64.to_biguint().unwrap());
+    let s = S256Field::new(1_u64.to_biguint().unwrap());
+    let mut der = Signature::new(r, s).to_der();
+    // der[2] should be 0x02; corrupt it
+    der[2] = 0x03;
+    assert!(Signature::from_der(&der).is_err());
+}
+
+#[test]
+fn test_from_der_rejects_extra_trailing_bytes() {
+    let r = S256Field::new(1_u64.to_biguint().unwrap());
+    let s = S256Field::new(1_u64.to_biguint().unwrap());
+    let mut der = Signature::new(r, s).to_der();
+    der.push(0x00); // extra byte
+    assert!(Signature::from_der(&der).is_err());
+}
+
+#[test]
+fn test_from_der_with_high_bit_padding() {
+    // r and s with high bit set — to_der should add 0x00 padding
+    let r = S256Field::new(0x80_u64.to_biguint().unwrap());
+    let s = S256Field::new(0xff_u64.to_biguint().unwrap());
+    let sig = Signature::new(r, s);
+
+    let der = sig.to_der();
+    let parsed = Signature::from_der(&der).unwrap();
+
+    assert_eq!(parsed.r.element, sig.r.element);
+    assert_eq!(parsed.s.element, sig.s.element);
+}
+
+#[test]
+fn test_from_der_sign_preserves_r_and_s() {
+    // Verifies that sign → to_der → from_der preserves r and s exactly.
+    // Full verify_sig is NOT tested here because verify_sig has a known issue:
+    // it uses FIELD_SIZE (prime p) as the modulus instead of CURVE_ORDER (n).
+    // ECDSA scalar arithmetic must use n, not p. Fix verify_sig before adding
+    // an end-to-end sign/verify test here.
+    use programming_bitcoin::ser_private_key::PrivateKey;
+
+    let pk = PrivateKey::new("test_secret_for_der");
+    let z = S256Field::new(42_u64.to_biguint().unwrap());
+
+    let sig = pk.sign(z).unwrap();
+    let der = sig.to_der();
+
+    let parsed = Signature::from_der(&der).unwrap();
+
+    assert_eq!(parsed.r.element, sig.r.element);
+    assert_eq!(parsed.s.element, sig.s.element);
 }

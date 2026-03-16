@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, io::Error as IoError};
 
 mod ch01_finite_fields;
 pub use ch01_finite_fields::*;
@@ -18,18 +18,14 @@ pub use ch05_transactions::*;
 mod ch06_script;
 pub use ch06_script::*;
 
-use crate::transaction::Transaction;
+use crate::{ch06_script::script::Script, transaction::Transaction};
 
-pub fn decode(transaction_hex: &str) -> Result<String, Box<dyn Error>> {
+pub fn decode_transaction(transaction_hex: &str) -> Result<String, Box<dyn Error>> {
     let tx_bytes = hex::decode(transaction_hex).map_err(|e| format!("Hex decode error: {}", e))?;
-    // let transaction = Transaction::consensus_decode(&mut tx_bytes.as_slice());
+
     Ok(serde_json::to_string_pretty(&Transaction::parse(
         &tx_bytes,
     ))?)
-    // serde_json::to_string_pretty(&transaction)
-
-    // println!("Transaction: {}", json_transaction);
-    // Ok(())
 }
 
 // Reads the number, and then the index from where to begin the next read
@@ -75,4 +71,11 @@ pub fn encode_varint(number: u64) -> Vec<u8> {
             bytes
         }
     }
+}
+
+pub fn parse_opcodes(codes: Vec<u8>) -> Result<Script, IoError> {
+    // Send in the codes without length prefix
+    let mut prefixed = encode_varint(codes.len() as u64);
+    prefixed.extend_from_slice(&codes);
+    Script::parse(&prefixed)
 }

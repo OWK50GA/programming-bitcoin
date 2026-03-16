@@ -2,7 +2,7 @@ use std::{collections::VecDeque, io::Error, ops::Add};
 
 use crate::{
     decode_varint, encode_varint,
-    op_codes::{Element, opcode_functions},
+    opcodes::{Element, opcode_functions},
 };
 
 #[derive(Debug, Clone)]
@@ -32,23 +32,29 @@ impl Script {
         Self { commands }
     }
 
-    pub fn parse(&self, ser: &[u8]) -> Result<Self, Error> {
+    pub fn parse(ser: &[u8]) -> Result<Self, Error> {
+        // ser[0] (or more bytes) is a varint giving the total byte length of the script body.
+        // varint_size is the number of bytes the varint itself occupies (1, 3, 5, or 9).
+        // end = varint_size + length, NOT just length — the loop must account for the offset.
         let (length, varint_size) = decode_varint(ser, 0);
         let mut commands = Vec::new();
         let mut index: usize = varint_size;
+        let end = varint_size + length as usize;
 
-        while index < length as usize {
+        while index < end {
             // let current = &ser[index];
 
             let current_byte = ser[index];
             index += 1;
             match current_byte {
+                // 0x01–0x4b: the byte itself is the number of data bytes to push
                 1..=75 => {
                     let n = current_byte as usize;
                     // commands.extend_from_slice(&ser[index..index+n]);
                     commands.push(Cmd::Data((ser[index..index + n]).to_vec()));
                     index += n;
                 }
+                // 0x4c = OP_PUSHDATA1: next 1 byte is the data length
                 76 => {
                     // let (data_length, _) = decode_varint(ser, index);
                     let data_length = ser[index] as usize;
@@ -59,6 +65,7 @@ impl Script {
                     commands.push(Cmd::Data(data));
                     index += data_length;
                 }
+                // 0x4d = OP_PUSHDATA2: next 2 bytes (little-endian) are the data length
                 77 => {
                     let data_length = u16::from_le_bytes(ser[index..index + 2].try_into().unwrap());
                     index += 2;
@@ -70,13 +77,14 @@ impl Script {
 
                     index += data_length as usize
                 }
+                // Everything else is an opcode
                 op_code => {
-                    // let op_code = current_byte;
+                    println!("Pushing Operation");
                     commands.push(Cmd::OpCode(op_code));
                 }
             };
         }
-        if index != length as usize {
+        if index != end {
             return Err(Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Parsing script failed",
@@ -88,23 +96,6 @@ impl Script {
 
     fn raw_serialize(&self) -> Vec<u8> {
         let mut result = Vec::new();
-
-        // for command in &self.commands {
-        //     if let Cmd::OpCode(op_code) = command {
-        //         let data_length = op_code.len();
-
-        //         if data_length > 75 && data_length < 0x100 {
-        //             result.push(76_u8);
-        //             result.extend_from_slice(&(data_length as u8).to_le_bytes());
-        //         } else if data_length >= 0x100 && data_length <= 520 {
-        //             result.push(77);
-        //             result.extend_from_slice(&(data_length as u16).to_le_bytes());
-        //         }
-        //     } else if let Cmd::Data(op_code) = command {
-        //         let data_length = op_code.len();
-        //         result.extend_from_slice(&(data_length as u8).to_le_bytes());
-        //     }
-        // }
 
         for command in &self.commands {
             match command {

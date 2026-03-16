@@ -1,2 +1,2 @@
-pub mod op_codes;
+pub mod opcodes;
 pub mod script;

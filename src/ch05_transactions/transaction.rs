@@ -67,12 +67,14 @@ impl Transaction {
     pub fn parse(serialization: &[u8]) -> Transaction {
         let mut index = 0;
 
+        // Version is 4 bytes, little-endian
         let version_bytes: [u8; 4] = serialization[index..index + 4].try_into().unwrap();
         let version = u32::from_le_bytes(version_bytes);
 
         // Check out the stream thing on page 115
         index += 4;
 
+        // decode_varint returns (value, new_absolute_index) — assign with = not +=
         let (input_count, new_index) = decode_varint(serialization, index);
 
         index = new_index;
@@ -80,6 +82,8 @@ impl Transaction {
         let mut inputs = Vec::new();
 
         for _ in 0..input_count {
+            // TxIn::parse returns (TxIn, displacement) where displacement is bytes consumed,
+            // NOT an absolute index — so use += here, not =
             let (input, displacement) = TxIn::parse(serialization, index);
             inputs.push(input);
             index += displacement;
@@ -91,6 +95,7 @@ impl Transaction {
         let mut outputs = Vec::new();
 
         for _ in 0..output_count {
+            // TxOut::parse returns (TxOut, new_absolute_index) — assign with = not +=
             let (output, new_index) = TxOut::parse(serialization, index);
             outputs.push(output);
             index = new_index
