@@ -344,10 +344,7 @@ impl OpCodes {
         let message = S256Field::from_bytes(_z);
         // let signature = Signature::from_der(&signature_bytes).unwrap();
 
-        let is_valid = match pubkey.verify_sig(message, signature) {
-            Ok(true) => true,
-            _ => false,
-        };
+        let is_valid = matches!(pubkey.verify_sig(message, signature), Ok(true));
 
         let num = if is_valid { 1 } else { 0 };
 
