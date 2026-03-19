@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::transaction::{decode_varint, encode_varint};
+use crate::{decode_varint, encode_varint};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TxOut {

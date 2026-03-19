@@ -3,10 +3,7 @@ use std::io::Error;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
 use sha2::{Digest, Sha256};
 
-use crate::{
-    transaction::{Transaction, decode_varint, encode_varint},
-    tx_fetcher::TxFetcher,
-};
+use crate::{decode_varint, encode_varint, transaction::Transaction, tx_fetcher::TxFetcher};
 
 #[derive(Debug, Clone, Copy)]
 pub struct TxId(pub [u8; 32]);
@@ -67,6 +64,7 @@ impl TxIn {
 
         let start_index = index;
         let (script_len, new_index) = decode_varint(data, index);
+        // decode_varint returns an absolute index; compute how many bytes the varint itself took
         let varint_size = new_index - start_index;
         index = new_index;
         displacement += varint_size;

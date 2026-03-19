@@ -2,7 +2,6 @@ use crate::ch04_serialization::ser_s256_field::S256Field;
 use crate::ch04_serialization::{ser_s256_point, ser_signature::Signature};
 use hmac::{Hmac, Mac};
 use num_bigint::{BigUint, ToBigUint};
-use rand::{RngCore, rngs::OsRng};
 use secp256k1::constants::{CURVE_ORDER, FIELD_SIZE};
 use ser_s256_point::S256Point;
 use sha2::{Digest, Sha256};
@@ -12,8 +11,11 @@ type HmacSha256 = Hmac<Sha256>;
 #[derive(Debug, Clone, Default)]
 pub struct PrivateKey {
     pub secret_bytes: S256Field,
-    pub point: S256Point,
+    pub public_key: PublicKey,
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct PublicKey(pub S256Point);
 
 impl PrivateKey {
     pub fn new(secret: &str) -> Self {
@@ -27,7 +29,7 @@ impl PrivateKey {
 
         PrivateKey {
             secret_bytes: felt,
-            point,
+            public_key: PublicKey(point),
         }
     }
 
@@ -41,15 +43,14 @@ impl PrivateKey {
     pub fn sign(self, z: S256Field) -> Result<Signature, Error> {
         let big_n = BigUint::from_bytes_be(&FIELD_SIZE);
 
-        let mut k_bytes = [0_u8; 32];
-        OsRng.fill_bytes(&mut k_bytes);
-
         let k = Self::deterministic_k(&self, z.clone());
         let r = S256Point::generate_point(k.clone().element).x.unwrap();
 
         let k_inv = k.inv().unwrap();
         let mut s = (z + r.clone() * self.secret_bytes) * k_inv;
 
+        // Normalise s to the lower half of the curve order to ensure signature
+        // malleability is not possible (both s and n-s are valid, low-s is canonical).
         if s.element > &big_n / 2.to_biguint().unwrap() {
             s = S256Field::new(big_n - s.element);
         }
