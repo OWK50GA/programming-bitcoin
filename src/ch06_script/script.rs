@@ -33,12 +33,26 @@ impl Script {
     }
 
     pub fn parse(ser: &[u8]) -> Result<Self, Error> {
-        let invalid = || Error::new(std::io::ErrorKind::InvalidData, "Truncated or invalid script");
+        let invalid = || {
+            Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Truncated or invalid script",
+            )
+        };
         let prefix = *ser.first().ok_or_else(invalid)?;
         let (length, prefix_size) = match prefix {
-            0xfd => (u16::from_le_bytes(ser.get(1..3).ok_or_else(invalid)?.try_into().unwrap()) as u64, 3usize),
-            0xfe => (u32::from_le_bytes(ser.get(1..5).ok_or_else(invalid)?.try_into().unwrap()) as u64, 5usize),
-            0xff => (u64::from_le_bytes(ser.get(1..9).ok_or_else(invalid)?.try_into().unwrap()), 9usize),
+            0xfd => (
+                u16::from_le_bytes(ser.get(1..3).ok_or_else(invalid)?.try_into().unwrap()) as u64,
+                3usize,
+            ),
+            0xfe => (
+                u32::from_le_bytes(ser.get(1..5).ok_or_else(invalid)?.try_into().unwrap()) as u64,
+                5usize,
+            ),
+            0xff => (
+                u64::from_le_bytes(ser.get(1..9).ok_or_else(invalid)?.try_into().unwrap()),
+                9usize,
+            ),
             n => (n as u64, 1usize),
         };
         let length = usize::try_from(length).map_err(|_| invalid())?;

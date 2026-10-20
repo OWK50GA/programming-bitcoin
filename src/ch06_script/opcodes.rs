@@ -26,9 +26,10 @@ pub struct Element(pub Vec<u8>);
 impl Element {
     /// Script booleans treat all-zero bytes and negative zero as false.
     pub fn is_truthy(&self) -> bool {
-        self.0.iter().enumerate().any(|(index, &byte)| {
-            byte != 0 && !(index == self.0.len() - 1 && byte == 0x80)
-        })
+        self.0
+            .iter()
+            .enumerate()
+            .any(|(index, &byte)| byte != 0 && !(index == self.0.len() - 1 && byte == 0x80))
     }
 }
 

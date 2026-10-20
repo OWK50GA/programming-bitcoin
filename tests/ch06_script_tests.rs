@@ -270,13 +270,24 @@ fn test_script_boolean_encodings() {
 #[test]
 fn test_parse_rejects_truncated_scripts() {
     let cases = [
-        vec![], vec![0xfd], vec![0xfd, 1], vec![0xfe, 0, 0, 0],
-        vec![0xff, 0, 0, 0, 0, 0, 0, 0], vec![2, 0x51],
-        vec![1, 2], vec![2, 2, 0xaa], vec![1, 76],
-        vec![2, 76, 1], vec![1, 77], vec![2, 77, 1],
-        vec![3, 77, 1, 0], vec![0xff, 255, 255, 255, 255, 255, 255, 255, 255],
+        vec![],
+        vec![0xfd],
+        vec![0xfd, 1],
+        vec![0xfe, 0, 0, 0],
+        vec![0xff, 0, 0, 0, 0, 0, 0, 0],
+        vec![2, 0x51],
+        vec![1, 2],
+        vec![2, 2, 0xaa],
+        vec![1, 76],
+        vec![2, 76, 1],
+        vec![1, 77],
+        vec![2, 77, 1],
+        vec![3, 77, 1, 0],
+        vec![0xff, 255, 255, 255, 255, 255, 255, 255, 255],
         // Bytes beyond the declared body must not satisfy a data push.
-        vec![1, 1, 0xaa], vec![2, 76, 1, 0xaa], vec![3, 77, 1, 0, 0xaa],
+        vec![1, 1, 0xaa],
+        vec![2, 76, 1, 0xaa],
+        vec![3, 77, 1, 0, 0xaa],
     ];
     for input in cases {
         assert!(Script::parse(&input).is_err(), "input: {input:?}");
@@ -290,7 +301,11 @@ fn test_parse_pushdata_boundaries() {
         let parsed = Script::parse(&script.serialize()).unwrap();
         assert_eq!(parsed.serialize(), script.serialize());
     }
-    for prefix in [vec![0xfd, 1, 0], vec![0xfe, 1, 0, 0, 0], vec![0xff, 1, 0, 0, 0, 0, 0, 0, 0]] {
+    for prefix in [
+        vec![0xfd, 1, 0],
+        vec![0xfe, 1, 0, 0, 0],
+        vec![0xff, 1, 0, 0, 0, 0, 0, 0, 0],
+    ] {
         let mut input = prefix;
         input.extend_from_slice(&[0x51, 0x00]);
         let script = Script::parse(&input).unwrap();
@@ -306,16 +321,22 @@ fn test_checksig_standard_stack_order() {
     let secret = SecretKey::from_byte_array([1; 32]).unwrap();
     let public = PublicKey::from_secret_key(&context, &secret);
     let digest = [2; 32];
-    let mut signature = context.sign_ecdsa(Message::from_digest(digest), &secret)
-        .serialize_der().to_vec();
+    let mut signature = context
+        .sign_ecdsa(Message::from_digest(digest), &secret)
+        .serialize_der()
+        .to_vec();
     signature.push(1); // SIGHASH_ALL
     let script = Script::new(vec![
-        Cmd::Data(signature), Cmd::Data(public.serialize().to_vec()), Cmd::OpCode(0xac),
+        Cmd::Data(signature),
+        Cmd::Data(public.serialize().to_vec()),
+        Cmd::OpCode(0xac),
     ]);
     assert!(script.evaluate(&digest).unwrap());
     assert!(!script.evaluate(&[3; 32]).unwrap());
     let empty_signature = Script::new(vec![
-        Cmd::Data(vec![]), Cmd::Data(public.serialize().to_vec()), Cmd::OpCode(0xac),
+        Cmd::Data(vec![]),
+        Cmd::Data(public.serialize().to_vec()),
+        Cmd::OpCode(0xac),
     ]);
     assert!(!empty_signature.evaluate(&digest).unwrap());
 }
