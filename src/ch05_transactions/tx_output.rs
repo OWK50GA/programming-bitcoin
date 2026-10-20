@@ -17,7 +17,7 @@ impl TxOut {
     }
 
     pub fn repr(&self) -> String {
-        format!("{}:{}", &self.amount, hex::encode(&self.script_pubkey))
+        format!("{}:{}", self.amount, hex::encode(&self.script_pubkey))
     }
 
     pub fn parse(data: &[u8], mut index: usize) -> (Self, usize) {

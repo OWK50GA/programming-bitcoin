@@ -250,3 +250,93 @@ fn test_script_add_concatenates() {
     let combined = s1 + s2;
     assert_eq!(combined.commands.len(), 3);
 }
+
+#[test]
+fn test_script_boolean_encodings() {
+    for bytes in [vec![], vec![0], vec![0, 0], vec![0x80], vec![0, 0x80]] {
+        let script = Script::new(vec![Cmd::Data(bytes.clone())]);
+        assert!(!script.evaluate(&[]).unwrap(), "false encoding: {bytes:?}");
+        let verify = script + Script::new(vec![Cmd::OpCode(0x69), Cmd::OpCode(0x51)]);
+        assert!(!verify.evaluate(&[]).unwrap());
+    }
+    for bytes in [vec![1], vec![0x80, 0], vec![0, 1], vec![0xff; 16]] {
+        let script = Script::new(vec![Cmd::Data(bytes.clone())]);
+        assert!(script.evaluate(&[]).unwrap(), "true encoding: {bytes:?}");
+        let verify = script + Script::new(vec![Cmd::OpCode(0x69), Cmd::OpCode(0x51)]);
+        assert!(verify.evaluate(&[]).unwrap());
+    }
+}
+
+#[test]
+fn test_parse_rejects_truncated_scripts() {
+    let cases = [
+        vec![],
+        vec![0xfd],
+        vec![0xfd, 1],
+        vec![0xfe, 0, 0, 0],
+        vec![0xff, 0, 0, 0, 0, 0, 0, 0],
+        vec![2, 0x51],
+        vec![1, 2],
+        vec![2, 2, 0xaa],
+        vec![1, 76],
+        vec![2, 76, 1],
+        vec![1, 77],
+        vec![2, 77, 1],
+        vec![3, 77, 1, 0],
+        vec![0xff, 255, 255, 255, 255, 255, 255, 255, 255],
+        // Bytes beyond the declared body must not satisfy a data push.
+        vec![1, 1, 0xaa],
+        vec![2, 76, 1, 0xaa],
+        vec![3, 77, 1, 0, 0xaa],
+    ];
+    for input in cases {
+        assert!(Script::parse(&input).is_err(), "input: {input:?}");
+    }
+}
+
+#[test]
+fn test_parse_pushdata_boundaries() {
+    for length in [0usize, 1, 75, 76, 255, 256, 520] {
+        let script = Script::new(vec![Cmd::Data(vec![0xaa; length])]);
+        let parsed = Script::parse(&script.serialize()).unwrap();
+        assert_eq!(parsed.serialize(), script.serialize());
+    }
+    for prefix in [
+        vec![0xfd, 1, 0],
+        vec![0xfe, 1, 0, 0, 0],
+        vec![0xff, 1, 0, 0, 0, 0, 0, 0, 0],
+    ] {
+        let mut input = prefix;
+        input.extend_from_slice(&[0x51, 0x00]);
+        let script = Script::parse(&input).unwrap();
+        assert_eq!(script.commands.len(), 1);
+        assert!(script.evaluate(&[]).unwrap());
+    }
+}
+
+#[test]
+fn test_checksig_standard_stack_order() {
+    use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
+    let context = Secp256k1::new();
+    let secret = SecretKey::from_byte_array([1; 32]).unwrap();
+    let public = PublicKey::from_secret_key(&context, &secret);
+    let digest = [2; 32];
+    let mut signature = context
+        .sign_ecdsa(Message::from_digest(digest), &secret)
+        .serialize_der()
+        .to_vec();
+    signature.push(1); // SIGHASH_ALL
+    let script = Script::new(vec![
+        Cmd::Data(signature),
+        Cmd::Data(public.serialize().to_vec()),
+        Cmd::OpCode(0xac),
+    ]);
+    assert!(script.evaluate(&digest).unwrap());
+    assert!(!script.evaluate(&[3; 32]).unwrap());
+    let empty_signature = Script::new(vec![
+        Cmd::Data(vec![]),
+        Cmd::Data(public.serialize().to_vec()),
+        Cmd::OpCode(0xac),
+    ]);
+    assert!(!empty_signature.evaluate(&digest).unwrap());
+}
