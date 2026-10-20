@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, io::Error, ops::Add};
 
 use crate::{
-    decode_varint, encode_varint,
+    encode_varint,
     opcodes::{Element, opcode_functions},
 };
 
@@ -33,62 +33,44 @@ impl Script {
     }
 
     pub fn parse(ser: &[u8]) -> Result<Self, Error> {
-        // ser[0] (or more bytes) is a varint giving the total byte length of the script body.
-        // varint_size is the number of bytes the varint itself occupies (1, 3, 5, or 9).
-        // end = varint_size + length, NOT just length — the loop must account for the offset.
-        let (length, varint_size) = decode_varint(ser, 0);
+        let invalid = || Error::new(std::io::ErrorKind::InvalidData, "Truncated or invalid script");
+        let prefix = *ser.first().ok_or_else(invalid)?;
+        let (length, prefix_size) = match prefix {
+            0xfd => (u16::from_le_bytes(ser.get(1..3).ok_or_else(invalid)?.try_into().unwrap()) as u64, 3usize),
+            0xfe => (u32::from_le_bytes(ser.get(1..5).ok_or_else(invalid)?.try_into().unwrap()) as u64, 5usize),
+            0xff => (u64::from_le_bytes(ser.get(1..9).ok_or_else(invalid)?.try_into().unwrap()), 9usize),
+            n => (n as u64, 1usize),
+        };
+        let length = usize::try_from(length).map_err(|_| invalid())?;
+        let end = prefix_size.checked_add(length).ok_or_else(invalid)?;
+        let body = ser.get(prefix_size..end).ok_or_else(invalid)?;
+        let mut index = 0usize;
         let mut commands = Vec::new();
-        let mut index: usize = varint_size;
-        let end = varint_size + length as usize;
 
-        while index < end {
-            // let current = &ser[index];
-
-            let current_byte = ser[index];
+        while index < body.len() {
+            let opcode = body[index];
             index += 1;
-            match current_byte {
-                // 0x01–0x4b: the byte itself is the number of data bytes to push
-                1..=75 => {
-                    let n = current_byte as usize;
-                    // commands.extend_from_slice(&ser[index..index+n]);
-                    commands.push(Cmd::Data((ser[index..index + n]).to_vec()));
-                    index += n;
-                }
-                // 0x4c = OP_PUSHDATA1: next 1 byte is the data length
+            let data_length = match opcode {
+                1..=75 => opcode as usize,
                 76 => {
-                    // let (data_length, _) = decode_varint(ser, index);
-                    let data_length = ser[index] as usize;
+                    let length = *body.get(index).ok_or_else(invalid)? as usize;
                     index += 1;
-                    // commands.extend_from_slice(&ser[index..index + data_length as usize]);
-                    // commands.push(Cmd::OpCode((ser[index..index + data_length]).to_vec()));
-                    let data = ser[index..index + data_length].to_vec();
-                    commands.push(Cmd::Data(data));
-                    index += data_length;
+                    length
                 }
-                // 0x4d = OP_PUSHDATA2: next 2 bytes (little-endian) are the data length
                 77 => {
-                    let data_length = u16::from_le_bytes(ser[index..index + 2].try_into().unwrap());
+                    let bytes = body.get(index..index + 2).ok_or_else(invalid)?;
                     index += 2;
-                    // commands.push(Cmd::OpCode(
-                    //     ser[index..index + data_length as usize].to_vec(),
-                    // ));
-                    let data = ser[index..index + data_length as usize].to_vec();
-                    commands.push(Cmd::Data(data));
-
-                    index += data_length as usize
+                    u16::from_le_bytes(bytes.try_into().unwrap()) as usize
                 }
-                // Everything else is an opcode
-                op_code => {
-                    println!("Pushing Operation");
-                    commands.push(Cmd::OpCode(op_code));
+                _ => {
+                    commands.push(Cmd::OpCode(opcode));
+                    continue;
                 }
             };
-        }
-        if index != end {
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Parsing script failed",
-            ));
+            let data_end = index.checked_add(data_length).ok_or_else(invalid)?;
+            let data = body.get(index..data_end).ok_or_else(invalid)?;
+            commands.push(Cmd::Data(data.to_vec()));
+            index = data_end;
         }
 
         Ok(Script { commands })
@@ -172,10 +154,6 @@ impl Script {
 
         let top = stack.pop().unwrap();
 
-        if top.0.is_empty() {
-            Ok(false)
-        } else {
-            Ok(true)
-        }
+        Ok(top.is_truthy())
     }
 }

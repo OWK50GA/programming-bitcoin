@@ -23,6 +23,15 @@ pub struct OpCodes {
 #[derive(Debug, Clone)]
 pub struct Element(pub Vec<u8>);
 
+impl Element {
+    /// Script booleans treat all-zero bytes and negative zero as false.
+    pub fn is_truthy(&self) -> bool {
+        self.0.iter().enumerate().any(|(index, &byte)| {
+            byte != 0 && !(index == self.0.len() - 1 && byte == 0x80)
+        })
+    }
+}
+
 impl OpCodes {
     pub fn encode_num(num: i64) -> Element {
         if num == 0 {
@@ -319,8 +328,8 @@ impl OpCodes {
             return false;
         }
 
-        let signature_bytes = stack.pop().unwrap().0;
         let pubkey_bytes = stack.pop().unwrap().0;
+        let signature_bytes = stack.pop().unwrap().0;
 
         if signature_bytes.is_empty() {
             stack.push(Self::encode_num(0));
@@ -424,9 +433,7 @@ impl OpCodes {
         }
 
         let element = stack.pop().unwrap();
-        let value = Self::decode_num(element);
-
-        if value == 0 {
+        if !element.is_truthy() {
             return false;
         }
 
